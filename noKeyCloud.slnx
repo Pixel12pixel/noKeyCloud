@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="noKeyCloud_api/noKeyCloud_api.csproj" />
+  <Project Path="noKeyCloud_apiUnitTests/noKeyCloud_apiUnitTests.csproj" />
+</Solution>
