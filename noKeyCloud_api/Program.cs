@@ -1,3 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using noKeyCloud_api.Data.Context;
+using Npgsql;
+
 namespace noKeyCloud_api;
 
 public class Program
@@ -7,6 +11,8 @@ public class Program
         DotNetEnv.Env.Load();
 
         var builder = WebApplication.CreateBuilder(args);
+
+        builder = AddDbContext(builder);
 
         // Add services to the container.
 
@@ -30,5 +36,31 @@ public class Program
         app.MapControllers();
 
         app.Run();
+    }
+    private static WebApplicationBuilder AddDbContext(WebApplicationBuilder builder)
+    {
+        string envFilePath = ".env";
+        string postgreUrl;
+        postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
+
+        var uri = new Uri(postgreUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var npgsqlBuilder = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            Username = userInfo[0],
+            Password = userInfo[1],
+            Pooling = true,
+        };
+
+        builder.Services.AddDbContext<DataContext>(opts =>
+            opts.UseNpgsql(
+                npgsqlBuilder.ConnectionString,
+                sqlOpts => sqlOpts.EnableRetryOnFailure()
+            )
+        );
+        return builder;
     }
 }
