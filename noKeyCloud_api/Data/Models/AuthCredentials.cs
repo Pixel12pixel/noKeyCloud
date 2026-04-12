@@ -7,8 +7,8 @@ namespace noKeyCloud_api.Data.Models
     {
         [Key]
         public required Guid Id { get; set; }
-        public required string Salt { get; set; }
-        public required string Verifier { get; set; }
+        public required byte[] Salt { get; set; }
+        public required byte[] Verifier { get; set; }
         public required DateTime CreatedAt { get; set; }
         public DateTime CreationDate { get; set; }
         public Guid UserId { get; set; }
