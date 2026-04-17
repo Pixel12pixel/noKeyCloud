@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
+using noKeyCloud.Application.Features.Users.LoginInit;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -30,6 +31,24 @@ public class AuthenticateController : ControllerBase
         {
             return Ok();
         }
+        return BadRequest(result.Error);
+    }
+    
+    [HttpPost("login/srp/init")]
+    public async Task<IActionResult> InitLogin([FromBody] LoginInitRequest request)
+    {
+        var command = new LoginInitCommand(
+            request.Username,
+            request.Email,
+            request.A);
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+    
         return BadRequest(result.Error);
     }
 }
