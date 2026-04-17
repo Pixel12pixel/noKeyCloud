@@ -16,5 +16,8 @@
     <BuildDependency Project="src/backend/noKeyCloud.Application/noKeyCloud.Application.csproj" />
     <BuildDependency Project="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj" />
   </Project>
-  <Project Path="tests/noKeyCloud.Application.UnitTests/noKeyCloud.Application.UnitTests.csproj" />
+  <Project Path="tests/noKeyCloud.Application.UnitTests/noKeyCloud.Application.UnitTests.csproj">
+    <BuildDependency Project="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Infrastructure/noKeyCloud.Infrastructure.csproj" />
+  </Project>
 </Solution>

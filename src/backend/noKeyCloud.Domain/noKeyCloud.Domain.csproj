@@ -11,7 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\shared\noKeyCloud.Contracts\noKeyCloud.Contracts.csproj" />
       <ProjectReference Include="..\..\shared\noKeyCloud.Contracts\noKeyCloud.Contracts.csproj" />
     </ItemGroup>
 
