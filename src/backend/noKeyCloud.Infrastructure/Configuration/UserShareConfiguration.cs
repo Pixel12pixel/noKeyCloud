@@ -22,7 +22,7 @@ namespace noKeyCloud.Infrastructure.Configuration
 
             builder
                 .HasOne(u => u.Recipient)
-                .WithMany(s => s.UserShares)
+                .WithMany()
                 .HasForeignKey(s => s.RecipientUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
