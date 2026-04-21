@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Infrastructure;
 using Npgsql;
 using Scalar.AspNetCore;
+using noKeyCloud.Application.Abstractions.Services;
+using noKeyCloud.Infrastructure.Services;
 
 namespace noKeyCloud.api;
 
@@ -19,6 +21,8 @@ public class Program
         builder.Services.AddControllers();
         
         builder.Services.AddOpenApi();
+        
+        builder.Services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
 
         var app = builder.Build();
 
@@ -40,8 +44,11 @@ public class Program
     }
     private static WebApplicationBuilder AddDbContext(WebApplicationBuilder builder)
     {
-        var envFilePath = ".env";
-        var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST")!;
+        var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
+        if (string.IsNullOrWhiteSpace(postgreUrl))
+        {
+            throw new InvalidOperationException("Required environment variable 'DB_HOST' is missing or empty. Configure 'DB_HOST' with the PostgreSQL connection URL before starting the application.");
+        }
 
         var uri = new Uri(postgreUrl);
         var userInfo = uri.UserInfo.Split(':');

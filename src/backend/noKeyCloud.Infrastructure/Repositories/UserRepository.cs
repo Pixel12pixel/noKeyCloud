@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Domain.Entities;
 
@@ -16,5 +17,11 @@ public class UserRepository : IUserRepository
     public async Task CreateUser(User user)
     {
         await _context.Users.AddAsync(user);
+    }
+
+    public async Task<User?> GetUserByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Username == identifier || u.Email == identifier,
+            cancellationToken);
     }
 }
