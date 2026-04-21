@@ -1,4 +1,23 @@
 <Solution>
-  <Project Path="noKeyCloud_api/noKeyCloud_api.csproj" />
-  <Project Path="noKeyCloud_apiUnitTests/noKeyCloud_apiUnitTests.csproj" />
+  <Project Path="src/shared/noKeyCloud.Contracts/noKeyCloud.Contracts.csproj" />
+  <Project Path="src/backend/noKeyCloud.api/noKeyCloud.api.csproj">
+    <BuildDependency Project="src/shared/noKeyCloud.Contracts/noKeyCloud.Contracts.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Application/noKeyCloud.Application.csproj" />
+  </Project>
+  <Project Path="src/backend/noKeyCloud.Application/noKeyCloud.Application.csproj">
+    <BuildDependency Project="src/shared/noKeyCloud.Contracts/noKeyCloud.Contracts.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj" />
+  </Project>
+  <Project Path="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj">
+    <BuildDependency Project="src/shared/noKeyCloud.Contracts/noKeyCloud.Contracts.csproj" />
+  </Project>
+  <Project Path="src/backend/noKeyCloud.Infrastructure/noKeyCloud.Infrastructure.csproj">
+    <BuildDependency Project="src/shared/noKeyCloud.Contracts/noKeyCloud.Contracts.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Application/noKeyCloud.Application.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj" />
+  </Project>
+  <Project Path="tests/noKeyCloud.Application.UnitTests/noKeyCloud.Application.UnitTests.csproj">
+    <BuildDependency Project="src/backend/noKeyCloud.Domain/noKeyCloud.Domain.csproj" />
+    <BuildDependency Project="src/backend/noKeyCloud.Infrastructure/noKeyCloud.Infrastructure.csproj" />
+  </Project>
 </Solution>
