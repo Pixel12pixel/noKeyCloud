@@ -6,4 +6,5 @@ public interface ISrpSessionStore
 {
     void SaveSession(Guid sessionId, Srp6Server srpServer);
     Srp6Server? GetSession(Guid sessionId);
+    bool DeleteSession(Guid sessionId);
 }
