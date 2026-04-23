@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
+using noKeyCloud.Application.Features.Users.LoginVerify;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -44,6 +45,23 @@ public class AuthenticateController : ControllerBase
 
         var result = await _mediator.Send(command);
 
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+    
+        return BadRequest(result.Error);
+    }
+
+    [HttpPost("login/srp/verify")]
+    public async Task<IActionResult> VerifyLogin([FromBody] LoginVerifyRequest request)
+    {
+        var command = new LoginVerifyCommand(
+            request.SessionId,
+            request.M1);
+
+        var result = await _mediator.Send(command);
+        
         if (result.IsSuccess)
         {
             return Ok(result.Value);

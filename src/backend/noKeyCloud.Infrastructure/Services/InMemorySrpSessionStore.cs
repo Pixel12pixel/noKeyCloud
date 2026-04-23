@@ -18,4 +18,9 @@ public class InMemorySrpSessionStore : ISrpSessionStore
         _sessions.TryGetValue(sessionId, out var session);
         return session;
     }
+
+    public bool DeleteSession(Guid sessionId)
+    {
+        return _sessions.TryRemove(sessionId, out _);
+    }
 }
