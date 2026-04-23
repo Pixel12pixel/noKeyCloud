@@ -6,6 +6,9 @@ on:
       - main
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   vulnerability-check:
     name: Check NuGet Vulnerabilities
