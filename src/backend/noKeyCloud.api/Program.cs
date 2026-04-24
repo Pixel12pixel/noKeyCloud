@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Infrastructure;
 using Npgsql;
 using Scalar.AspNetCore;
-using noKeyCloud.Application.Abstractions.Services;
-using noKeyCloud.Infrastructure.Services;
 
 namespace noKeyCloud.api;
 
@@ -22,7 +20,7 @@ public class Program
         
         builder.Services.AddOpenApi();
         
-        builder.Services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
+        builder.Services.AddInfrastructure();
 
         var app = builder.Build();
 
