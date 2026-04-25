@@ -24,7 +24,7 @@ public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
         try
         {
             byte[] M1Byte = Convert.FromBase64String(request.M1);
-            clientM1 = new BigInteger(M1Byte);
+            clientM1 = new BigInteger(1,M1Byte);
         }
         catch (FormatException)
         {
@@ -41,7 +41,7 @@ public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
             return Result<LoginVerifyResponse>.Failure("SRP verification failed");
         }
         
-        if(!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials");
+        if(!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials.");
 
         var serverM2 = session.CalculateServerEvidenceMessage();
         
