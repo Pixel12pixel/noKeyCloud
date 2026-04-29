@@ -21,8 +21,6 @@ public class ListContentHandlerTests
         var userId = Guid.NewGuid();
         var folderId = Guid.NewGuid();
 
-        // Uwaga: w modelu domenowym Folder.ParentFolderId nie jest nullable,
-        // więc dla roota zwykle daje się Guid.Empty (o ile tak przyjęliście w domenie).
         var parentFolderIdForFolder = Guid.Empty;
 
         var now = DateTime.UtcNow;
