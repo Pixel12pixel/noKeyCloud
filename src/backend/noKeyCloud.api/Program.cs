@@ -4,6 +4,8 @@ using Npgsql;
 using Scalar.AspNetCore;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Infrastructure.Services;
+using noKeyCloud.Infrastructure.Repositories;
+using noKeyCloud.Application.Abstractions.Repositories;
 
 namespace noKeyCloud.api;
 
@@ -17,6 +19,7 @@ public class Program
 
         builder = AddDbContext(builder);
         
+        builder.Services.AddScoped<IFolderRepository, FolderRepository>();
 
         builder.Services.AddControllers();
         
