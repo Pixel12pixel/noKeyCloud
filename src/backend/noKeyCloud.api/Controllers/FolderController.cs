@@ -34,7 +34,7 @@ public class FolderController : ControllerBase
             request.Name,
             request.ParentFolderId);
 
-        var response = await mediator.Send(command, cancellationToken);
+        var response = await _mediator.Send(command, cancellationToken);
         
         return Created($"/api/Folder/{response.Id}", response);
     }

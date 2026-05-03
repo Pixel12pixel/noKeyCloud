@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using noKeyCloud.Domain.Entities;
+
 namespace noKeyCloud.Application.Abstractions.Repositories
 {
     public interface IFolderRepository

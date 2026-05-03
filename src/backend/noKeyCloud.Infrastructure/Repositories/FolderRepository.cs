@@ -1,7 +1,4 @@
 using noKeyCloud.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
 
@@ -27,13 +24,13 @@ namespace noKeyCloud.Infrastructure.Repositories
             }
             return (folder.Files.ToList(), folder.SubFolders.ToList());
         }
-    }
-    
-    public async Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default)
-    {
-        await context.Folders.AddAsync(folder, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
         
-        return folder;
+        public async Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default)
+        {
+            await _context.Folders.AddAsync(folder, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        
+            return folder;
+        }
     }
 }
