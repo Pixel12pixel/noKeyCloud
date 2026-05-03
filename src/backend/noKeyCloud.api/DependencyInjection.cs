@@ -1,10 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using noKeyCloud.Application.Abstractions.Repositories;
+﻿using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Infrastructure.Repositories;
 using noKeyCloud.Infrastructure.Services;
 
-namespace noKeyCloud.Infrastructure;
+namespace noKeyCloud.api;
 
 public static class DependencyInjection
 {
