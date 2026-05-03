@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.api.Controllers.DTOs;
 using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
@@ -6,11 +6,26 @@ using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
 namespace noKeyCloud.api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-// TODO: Re-enable [Authorize] once authentication middleware and JWT generation are fully implemented.
-// [Authorize] 
-public class FolderController(IMediator mediator) : ControllerBase
+[Route("api/[Controller]")]
+public class FolderController : ControllerBase
 {
+    private readonly Mediator _mediator;
+    public FolderController(Mediator mediator)
+    {
+        _mediator = mediator;
+    }
+    [HttpGet("GetContent")]
+    public async Task<IActionResult> GetContent(Guid folderId, Guid userId, CancellationToken cancellationToken)
+    {
+        var query = new Application.Features.Folders.ListContent.ListContentQuery(folderId, userId);
+        var result = await _mediator.Send(query, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+        return BadRequest(result.Error);
+    }
+    
     [HttpPost]
     public async Task<ActionResult<CreateFolderResponse>> Create([FromBody] CreateFolderRequest request, CancellationToken cancellationToken)
     {

@@ -1,8 +1,12 @@
-﻿using noKeyCloud.Domain.Entities;
-
-namespace noKeyCloud.Application.Abstractions.Repositories;
-
-public interface IFolderRepository
+using System;
+using System.Collections.Generic;
+using System.Text;
+namespace noKeyCloud.Application.Abstractions.Repositories
 {
-    Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default);
+    public interface IFolderRepository
+    {
+        Task<(List<noKeyCloud.Domain.Entities.File>, List<Folder>)> GetFilesOrContentAsync(Guid folderId, Guid userId, CancellationToken cancellationToken);
+
+        Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default);
+    }
 }
