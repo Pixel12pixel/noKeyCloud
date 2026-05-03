@@ -25,7 +25,7 @@ public class Program
         
         builder.Services.AddOpenApi();
         
-        builder.Services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
+        builder.Services.AddInfrastructure();
 
         var app = builder.Build();
 

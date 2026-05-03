@@ -5,7 +5,7 @@ using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Domain.Entities;
 using Org.BouncyCastle.Crypto.Agreement.Srp;
 
-namespace noKeyCloud_apiUnitTests.Features.Users.Login;
+namespace noKeyCloud.Application.UnitTests.Features.Users.Login;
 
 public class LoginInitTests
 {

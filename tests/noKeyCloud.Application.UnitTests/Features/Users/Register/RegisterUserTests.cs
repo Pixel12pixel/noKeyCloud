@@ -2,7 +2,7 @@
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Features.Users.Register;
 
-namespace noKeyCloud_apiUnitTests.Features.Users.Register;
+namespace noKeyCloud.Application.UnitTests.Features.Users.Register;
 
 public class RegisterUserTests
 {
