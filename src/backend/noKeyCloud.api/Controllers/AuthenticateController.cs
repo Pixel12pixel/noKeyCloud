@@ -4,6 +4,9 @@ using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
+using noKeyCloud.Application.Abstractions.Services;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -12,11 +15,13 @@ namespace noKeyCloud.api.Controllers;
 [Route("api/[controller]")]
 public class AuthenticateController : ControllerBase
 {
+    private readonly IJwtService _jwtService;
     private readonly IMediator _mediator;
     
-    public AuthenticateController(IMediator mediator)
+    public AuthenticateController(IMediator mediator, IJwtService jwtService)
     {
         _mediator = mediator;
+        _jwtService = jwtService;
     }
     
     [HttpPost("register")]
@@ -61,10 +66,17 @@ public class AuthenticateController : ControllerBase
             request.M1);
 
         var result = await _mediator.Send(command);
-        
+
         if (result.IsSuccess)
         {
-            return Ok(result.Value);
+
+           if(Guid.TryParse(result.Value!.UserId, out Guid userGuid))
+           {
+                var token = await _jwtService.JwtTokenService(userGuid);
+                return Ok(new { result.Value, token });
+           }
+
+           return BadRequest("Invalid user ID format");
         }
     
         return BadRequest(result.Error);

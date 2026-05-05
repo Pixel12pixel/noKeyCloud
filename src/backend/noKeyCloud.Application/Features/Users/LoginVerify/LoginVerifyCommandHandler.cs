@@ -44,10 +44,11 @@ public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
         if(!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials");
 
         var serverM2 = session.CalculateServerEvidenceMessage();
-        
+        var userId = sessionStore.GetUserId(sessionIdGuid); // Assuming sessionStore has this method or similar
+
         if(!sessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
 
-        var response = new LoginVerifyResponse(Convert.ToBase64String(serverM2.ToByteArrayUnsigned()));
+        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()));
         
         return Result<LoginVerifyResponse>.Success(response);
     }
