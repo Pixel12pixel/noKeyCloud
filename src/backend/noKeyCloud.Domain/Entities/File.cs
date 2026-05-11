@@ -36,7 +36,7 @@ public class File
     //Validation
     
     public File(Guid id, byte[] encryptedName, string mimeType, long sizeBytes, string storagePath, byte[] encryptedKey, byte[] checksum,
-        Guid parentFolderId, Guid userId,  Folder parentFolder, User user)
+        Guid parentFolderId, Guid userId)
     {
         Id = id;
         EncryptedName = encryptedName;
@@ -49,6 +49,11 @@ public class File
         UpdatedAt = CreatedAt;
         ParentFolderId = parentFolderId;
         UserId = userId;
+        
+    }
+
+    public void InitAdditionalData(Folder parentFolder, User user)
+    {
         ParentFolder = parentFolder;
         OwnerUser = user;
     }

@@ -42,7 +42,9 @@ public class CreateFileHandler(IFileRepository fileRepository)
         try
         {
             var file = new File(fileId, encryptedName, string.Empty, fileSize, "/", [], [],
-                folderId, userId, folder, user);
+                folderId, userId);
+            
+            file.InitAdditionalData(folder, user);
             
             await fileRepository.CreateFile(file,  cancellationToken);
         }
