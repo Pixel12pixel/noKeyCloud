@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.api.Controllers.DTOs;
 using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
@@ -14,6 +15,7 @@ public class FolderController : ControllerBase
     {
         _mediator = mediator;
     }
+    [Authorize]
     [HttpGet("GetContent")]
     public async Task<IActionResult> GetContent(Guid folderId, Guid userId, CancellationToken cancellationToken)
     {
@@ -25,7 +27,7 @@ public class FolderController : ControllerBase
         }
         return BadRequest(result.Error);
     }
-    
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<CreateFolderResponse>> Create([FromBody] CreateFolderRequest request, CancellationToken cancellationToken)
     {

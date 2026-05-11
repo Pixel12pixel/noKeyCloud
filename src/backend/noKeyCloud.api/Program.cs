@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Infrastructure;
 using Npgsql;
@@ -31,7 +32,34 @@ public class Program
         builder.Services.AddInfrastructure();
 
         builder.Services.AddAuthorization();
-        builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+
+        var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
+
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            throw new ArgumentNullException(nameof(secretKey), "JWT secret key must be provided in environment variables.");
+        }
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.MapInboundClaims = false;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuers = jwtSettings.GetSection("ValidIssuer").Get<string[]>(),
+                ValidAudiences = jwtSettings.GetSection("ValidAudience").Get<string[]>(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+            };
+        });
 
         builder.Services.AddMediatR(cfg => {
             cfg.LicenseKey = Environment.GetEnvironmentVariable("KEY_LICENSE");
@@ -57,32 +85,6 @@ public class Program
         app.MapControllers();
 
         app.Run();
-
-
-        var JwtSettings = builder.Configuration.GetSection("JwtSettings");
-        var secretKey = Environment.GetEnvironmentVariable("JwtSettings_Secret");
-
-        builder.Services.AddAuthentication(JwtOptions =>
-        {
-            JwtOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            JwtOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-            .AddJwtBearer(JwtOptions =>
-            {
-
-
-
-                JwtOptions.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidAudiences = builder.Configuration.GetSection("Jwt:ValidAudiences").Get<string[]>(),
-                    ValidIssuers = builder.Configuration.GetSection("Jwt:ValidIssuers").Get<string[]>(),
-                };
-                JwtOptions.MapInboundClaims = false;
-            });
     }
     private static WebApplicationBuilder AddDbContext(WebApplicationBuilder builder)
     {

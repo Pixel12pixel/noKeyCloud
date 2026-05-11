@@ -20,7 +20,14 @@ namespace noKeyCloud.Infrastructure.Services
         public async Task<string> JwtTokenService(Guid Id)
         {
             var JwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSettings["SecretKey"]));
+            var secretKeyString = Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
+
+            if (string.IsNullOrEmpty(secretKeyString))
+            {
+                throw new InvalidOperationException("Missing JWT SecretKey environment variable");
+            }
+
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKeyString));
 
             var claims = new[]
             {
@@ -28,11 +35,14 @@ namespace noKeyCloud.Infrastructure.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
+            var validIssuers = JwtSettings.GetSection("ValidIssuer").Get<string[]>() ?? Array.Empty<string>();
+            var validAudiences = JwtSettings.GetSection("ValidAudience").Get<string[]>() ?? Array.Empty<string>();
+
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: JwtSettings["ValidIssuer"],
-                audience: JwtSettings["ValidAudience"],
+                issuer: validIssuers.FirstOrDefault(),
+                audience: validAudiences.FirstOrDefault(),
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(double.Parse(JwtSettings["Lifetime"] ?? "60")),
                 signingCredentials: credentials
