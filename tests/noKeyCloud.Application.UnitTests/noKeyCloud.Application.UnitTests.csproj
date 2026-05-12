@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\backend\noKeyCloud.Application\noKeyCloud.Application.csproj" />
+      <ProjectReference Include="..\..\src\backend\noKeyCloud.Infrastructure\noKeyCloud.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
