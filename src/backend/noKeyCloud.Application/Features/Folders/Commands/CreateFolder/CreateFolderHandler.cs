@@ -21,7 +21,7 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
         }
         
         var rootFolderId = GenerateRootFolderId(request.UserId);
-        var parentFolderId = request.ParentFolderId ?? rootFolderId;
+        var parentFolderId = request.ParentFolderId ?? null;
         
         var now = DateTime.UtcNow;
         var folder = new Folder(

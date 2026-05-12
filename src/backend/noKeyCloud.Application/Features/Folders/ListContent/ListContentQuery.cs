@@ -12,9 +12,7 @@ namespace noKeyCloud.Application.Features.Folders.ListContent;
 public record ListContentQuery(
     Guid FolderId,
     Guid UserId
-    ) : IRequest<Result<ListContentResponse>>, IAuthorizableRequest
-{
-    public Guid Id => UserId;
-}
+    ) : IRequest<Result<ListContentResponse>>;
+
 
 

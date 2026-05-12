@@ -18,8 +18,6 @@ public static class DependencyInjection
 
         services.AddScoped<IJwtService, JwtService>();
 
-        services.AddScoped<ICurrentUserSerivce, CurrentUserService>();
-
         services.AddScoped<IMediator, Mediator>();
 
         return services;

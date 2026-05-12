@@ -7,6 +7,6 @@ namespace noKeyCloud.Application.Abstractions.Services
 {
     public interface IJwtService
     {
-        Task<string> JwtTokenService(Guid Id);
+        Task<string> JwtTokenService(Guid? Id);
     }
 }

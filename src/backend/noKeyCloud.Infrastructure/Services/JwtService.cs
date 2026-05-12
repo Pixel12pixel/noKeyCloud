@@ -17,7 +17,7 @@ namespace noKeyCloud.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<string> JwtTokenService(Guid Id)
+        public async Task<string> JwtTokenService(Guid? Id)
         {
             var JwtSettings = _configuration.GetSection("JwtSettings");
             var secretKeyString = Environment.GetEnvironmentVariable("JwtSettings__SecretKey");

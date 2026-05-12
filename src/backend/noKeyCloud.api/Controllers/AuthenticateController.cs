@@ -15,15 +15,12 @@ namespace noKeyCloud.api.Controllers;
 [Route("api/[controller]")]
 public class AuthenticateController : ControllerBase
 {
-    private readonly IJwtService _jwtService;
     private readonly IMediator _mediator;
-    
-    public AuthenticateController(IMediator mediator, IJwtService jwtService)
+    public AuthenticateController(IMediator mediator)
     {
         _mediator = mediator;
-        _jwtService = jwtService;
     }
-    
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
     {
@@ -70,15 +67,13 @@ public class AuthenticateController : ControllerBase
         if (result.IsSuccess)
         {
 
-           if(Guid.TryParse(result.Value!.UserId, out Guid userGuid))
-           {
-                var token = await _jwtService.JwtTokenService(userGuid);
-                return Ok(new { result.Value, token });
-           }
-
-           return BadRequest("Invalid user ID format");
+           return Ok(result.Value);
         }
-    
+        else if (result.Error == "Invalid credentials" || result.Error == "Session not found." || result.Error == "SRP verification failed")
+        {
+            return Unauthorized(result.Error);
+        }
+
         return BadRequest(result.Error);
     }
 }

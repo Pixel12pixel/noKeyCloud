@@ -3,5 +3,6 @@
 public record LoginVerifyResponse
 (
     string UserId,
-    string M2
+    string M2,
+    string Token
 );

@@ -10,8 +10,8 @@ namespace noKeyCloud.api.Controllers;
 [Route("api/[Controller]")]
 public class FolderController : ControllerBase
 {
-    private readonly Mediator _mediator;
-    public FolderController(Mediator mediator)
+    private readonly IMediator _mediator;
+    public FolderController(IMediator mediator)
     {
         _mediator = mediator;
     }
