@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using noKeyCloud.Application.Features.Users.CreateFile;
-using noKeyCloud.Contracts.Authenticate;
+using noKeyCloud.Application.Features.Files.CreateFile;
+using noKeyCloud.Contracts.File;
 
 namespace noKeyCloud.api.Controllers;
 

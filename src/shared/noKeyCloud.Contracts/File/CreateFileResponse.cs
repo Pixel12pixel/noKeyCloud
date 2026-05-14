@@ -1,4 +1,4 @@
-﻿namespace noKeyCloud.Contracts.Authenticate;
+﻿namespace noKeyCloud.Contracts.File;
 
 public record CreateFileResponse
 (

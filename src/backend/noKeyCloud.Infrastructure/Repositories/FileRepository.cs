@@ -14,18 +14,6 @@ public class FileRepository :  IFileRepository
         _context = context;
     }
 
-    public async Task<User?> GetUserByUserId(Guid userId, CancellationToken cancellationToken)
-    {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId,
-            cancellationToken);
-    }
-
-    public async Task<Folder?> GetFolderByFolderId(Guid folderId, CancellationToken cancellationToken)
-    {
-        return await _context.Folders.FirstOrDefaultAsync(u => u.Id == folderId,
-            cancellationToken);
-    }
-
     public async Task CreateFile(File file,  CancellationToken cancellationToken)
     {
         await _context.Files.AddAsync(file, cancellationToken);

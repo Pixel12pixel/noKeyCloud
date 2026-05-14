@@ -6,9 +6,6 @@ namespace noKeyCloud.Application.Abstractions.Repositories;
 
 public interface IFileRepository
 {
-    Task<User?> GetUserByUserId(Guid userId, CancellationToken cancellationToken);
-    
-    Task<Folder?> GetFolderByFolderId(Guid folderId, CancellationToken cancellationToken);
     
     Task CreateFile(File file, CancellationToken cancellationToken);
 

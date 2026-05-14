@@ -1,8 +1,8 @@
 ﻿using MediatR;
-using noKeyCloud.Contracts.Authenticate;
+using noKeyCloud.Contracts.File;
 using noKeyCloud.Contracts.Common;
 
-namespace noKeyCloud.Application.Features.Users.CreateFile;
+namespace noKeyCloud.Application.Features.Files.CreateFile;
 
 public record CreateFileCommand
 (

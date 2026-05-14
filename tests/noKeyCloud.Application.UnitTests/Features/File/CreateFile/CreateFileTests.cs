@@ -1,20 +1,24 @@
 ﻿using Moq;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Application.Features.Users.CreateFile;
+using noKeyCloud.Application.Features.Files.CreateFile;
 using noKeyCloud.Domain.Entities;
 
-namespace noKeyCloud_apiUnitTests.Features.Users.File;
+namespace noKeyCloud_apiUnitTests.Features.File.CreateFile;
 
 public class CreateFileTests
 {
     private readonly Mock<IFileRepository> _fileRepositoryMock;
+    private  readonly Mock<IUserRepository> _userRepositoryMock;
+    private readonly Mock<IFolderRepository> _folderRepositoryMock;
     private readonly CreateFileHandler _handler;
     
     public CreateFileTests()
     {
         _fileRepositoryMock = new Mock<IFileRepository>();
+        _userRepositoryMock = new Mock<IUserRepository>();
+        _folderRepositoryMock = new Mock<IFolderRepository>();
         
-        _handler = new CreateFileHandler(_fileRepositoryMock.Object);
+        _handler = new CreateFileHandler(_fileRepositoryMock.Object,  _userRepositoryMock.Object,  _folderRepositoryMock.Object);
     }
 
     [Fact]
@@ -46,11 +50,11 @@ public class CreateFileTests
             .Setup(repo => repo.FileExists(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         
-        _fileRepositoryMock
+        _userRepositoryMock
             .Setup(repo => repo.GetUserByUserId(fakeUser.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeUser);
         
-        _fileRepositoryMock
+        _folderRepositoryMock
             .Setup(repo => repo.GetFolderByFolderId(fakeFolder.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeFolder);
         
@@ -98,11 +102,11 @@ public class CreateFileTests
             .Setup(repo => repo.FileExists(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         
-        _fileRepositoryMock
+        _userRepositoryMock
             .Setup(repo => repo.GetUserByUserId(fakeUser.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeUser);
         
-        _fileRepositoryMock
+        _folderRepositoryMock
             .Setup(repo => repo.GetFolderByFolderId(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Folder?)null);
         
@@ -147,11 +151,11 @@ public class CreateFileTests
             .Setup(repo => repo.FileExists(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         
-        _fileRepositoryMock
+        _userRepositoryMock
             .Setup(repo => repo.GetUserByUserId(fakeUser.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeUser);
         
-        _fileRepositoryMock
+        _folderRepositoryMock
             .Setup(repo => repo.GetFolderByFolderId(fakeFolder.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeFolder);
         

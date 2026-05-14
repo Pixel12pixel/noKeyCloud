@@ -1,13 +1,13 @@
 ﻿using System.Text;
 using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Contracts.Authenticate;
+using noKeyCloud.Contracts.File;
 using noKeyCloud.Contracts.Common;
 using File = noKeyCloud.Domain.Entities.File;
 
-namespace noKeyCloud.Application.Features.Users.CreateFile;
+namespace noKeyCloud.Application.Features.Files.CreateFile;
 
-public class CreateFileHandler(IFileRepository fileRepository)
+public class CreateFileHandler(IFileRepository fileRepository, IUserRepository userRepository, IFolderRepository folderRepository)
     : IRequestHandler<CreateFileCommand, Result<CreateFileResponse>>
 {
     public async Task<Result<CreateFileResponse>> Handle(CreateFileCommand request, CancellationToken cancellationToken)
@@ -28,8 +28,8 @@ public class CreateFileHandler(IFileRepository fileRepository)
             return Result<CreateFileResponse>.Failure("Wrong id format");
         }
         
-        var folder = await fileRepository.GetFolderByFolderId(folderId, cancellationToken);
-        var user = await fileRepository.GetUserByUserId(userId, cancellationToken);
+        var folder = await folderRepository.GetFolderByFolderId(folderId, cancellationToken);
+        var user = await userRepository.GetUserByUserId(userId, cancellationToken);
         
         if (user == null) return Result<CreateFileResponse>.Failure("User not found");
         if (folder == null) return Result<CreateFileResponse>.Failure("Folder not found");

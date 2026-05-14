@@ -24,4 +24,10 @@ public class UserRepository : IUserRepository
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == identifier || u.Email == identifier,
             cancellationToken);
     }
+    
+    public async Task<User?> GetUserByUserId(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId,
+            cancellationToken);
+    }
 }
