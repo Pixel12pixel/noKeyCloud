@@ -22,7 +22,9 @@ public class LoginVerifyTests
     {
         _sessionStoreMock = new Mock<ISrpSessionStore>();
         
-        _handler = new LoginVerifyCommandHandler(_sessionStoreMock.Object);
+        IJwtService jwtServiceMock = new Mock<IJwtService>().Object;
+        
+        _handler = new LoginVerifyCommandHandler(jwtServiceMock, _sessionStoreMock.Object);
     }
 
     [Fact]
