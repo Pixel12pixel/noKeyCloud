@@ -4,5 +4,6 @@ public record LoginVerifyResponse
 (
     string UserId,
     string M2,
-    string Token
+    string JwtToken,
+    string RefreshToken
 );

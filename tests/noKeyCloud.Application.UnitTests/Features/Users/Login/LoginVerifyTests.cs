@@ -19,16 +19,21 @@ public class LoginVerifyTests
 {
     private readonly Mock<ISrpSessionStore> _sessionStoreMock;
     private readonly LoginVerifyCommandHandler _handler;
-    
+    private readonly Mock<IRefreshTokenProvider> _refreshTokenProviderMock;
+
     public LoginVerifyTests()
     {
         _sessionStoreMock = new Mock<ISrpSessionStore>();
+        _refreshTokenProviderMock = new Mock<IRefreshTokenProvider>();
+        
+        _refreshTokenProviderMock.Setup(x => x.GenerateRefreshToken())
+            .Returns("dummy-refresh-token");
 
         IConfiguration configuration = new ConfigurationBuilder().Build();
         
         IJwtService jwtService = new JwtService(configuration);
         
-        _handler = new LoginVerifyCommandHandler(jwtService, _sessionStoreMock.Object);
+        _handler = new LoginVerifyCommandHandler(jwtService, _sessionStoreMock.Object, _refreshTokenProviderMock.Object);
     }
 
     [Fact]
@@ -87,10 +92,15 @@ public class LoginVerifyTests
         var M1 = client.CalculateClientEvidenceMessage();
 
         var sessionId = Guid.NewGuid();
+        var testUserId = Guid.NewGuid();
 
         _sessionStoreMock
             .Setup(x => x.GetSession(sessionId))
             .Returns(server);
+        
+        _sessionStoreMock
+            .Setup(x => x.GetUserId(sessionId))
+            .Returns(testUserId);
         
         _sessionStoreMock
             .Setup(x => x.DeleteSession(sessionId))
@@ -104,6 +114,15 @@ public class LoginVerifyTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
+        
+        Assert.Equal("dummy-refresh-token", result.Value.RefreshToken);
+        
+        _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
+            It.IsAny<Guid>(),
+            "dummy-refresh-token",
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()
+        ), Times.Once);
     }
     
     [Fact]

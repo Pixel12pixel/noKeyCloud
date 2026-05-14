@@ -19,6 +19,10 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
 
         services.AddScoped<IMediator, Mediator>();
+        
+        services.AddDistributedMemoryCache();
+        
+        services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
 
         return services;
     }

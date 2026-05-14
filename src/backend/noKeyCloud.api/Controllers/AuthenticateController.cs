@@ -4,9 +4,7 @@ using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
-using noKeyCloud.Application.Abstractions.Services;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
+using noKeyCloud.Application.Features.Users.RefreshSession;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -75,5 +73,19 @@ public class AuthenticateController : ControllerBase
         }
 
         return BadRequest(result.Error);
+    }
+    
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshSession([FromBody] RefreshSessionRequest request)
+    {
+        var command = new RefreshSessionCommand(request.UserId, request.RefreshToken);
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return Unauthorized(new { Error = result.Error });
+        }
+
+        return Ok(result.Value);
     }
 }
