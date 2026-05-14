@@ -26,6 +26,6 @@ public record FolderResponse(
     byte[] FolderKeyEncrypted,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    Guid ParentFolderId
+    Guid? ParentFolderId
 );
 

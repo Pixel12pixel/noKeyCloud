@@ -1,4 +1,5 @@
-﻿using noKeyCloud.Application.Abstractions.Repositories;
+﻿using MediatR;
+using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Infrastructure.Repositories;
 using noKeyCloud.Infrastructure.Services;
@@ -14,7 +15,11 @@ public static class DependencyInjection
         services.AddScoped<IFolderRepository, FolderRepository>();
         
         services.AddScoped<IUserRepository, UserRepository>();
-        
+
+        services.AddScoped<IJwtService, JwtService>();
+
+        services.AddScoped<IMediator, Mediator>();
+
         return services;
     }
 }

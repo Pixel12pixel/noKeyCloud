@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Infrastructure;
 using Npgsql;
@@ -6,6 +7,9 @@ using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Infrastructure.Services;
 using noKeyCloud.Infrastructure.Repositories;
 using noKeyCloud.Application.Abstractions.Repositories;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using noKeyCloud.Application.Features.Users.Register;
 
 namespace noKeyCloud.api;
 
@@ -19,13 +23,49 @@ public class Program
 
         builder = AddDbContext(builder);
         
-        builder.Services.AddScoped<IFolderRepository, FolderRepository>();
 
         builder.Services.AddControllers();
-        
+
         builder.Services.AddOpenApi();
-        
+
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddInfrastructure();
+
+        builder.Services.AddAuthorization();
+
+        var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        var secretKey = Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
+
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            throw new ArgumentNullException(nameof(secretKey), "JWT secret key must be provided in environment variables.");
+        }
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.MapInboundClaims = false;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuers = jwtSettings.GetSection("ValidIssuer").Get<string[]>(),
+                ValidAudiences = jwtSettings.GetSection("ValidAudience").Get<string[]>(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+            };
+        });
+
+        builder.Services.AddMediatR(cfg => {
+            cfg.LicenseKey = Environment.GetEnvironmentVariable("KEY_LICENSE");
+            cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+            cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly);
+        });
 
         var app = builder.Build();
 
@@ -38,6 +78,7 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
 

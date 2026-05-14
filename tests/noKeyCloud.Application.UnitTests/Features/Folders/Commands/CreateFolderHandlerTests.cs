@@ -50,7 +50,7 @@ public class CreateFolderHandlerTests
                 It.Is<Folder>(f => 
                     f.UserId == command.UserId && 
                     Encoding.UTF8.GetString(f.EncryptedName) == command.FolderName && 
-                    f.ParentFolderId == expectedRootFolderId),
+                    f.ParentFolderId == null),
                 It.IsAny<CancellationToken>()), 
             Times.Once);
     }

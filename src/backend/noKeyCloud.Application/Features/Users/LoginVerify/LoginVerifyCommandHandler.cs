@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using MediatR;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Contracts.Authenticate;
@@ -8,14 +8,23 @@ using BigInteger = Org.BouncyCastle.Math.BigInteger;
 
 namespace noKeyCloud.Application.Features.Users.LoginVerify;
 
-public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
+public class LoginVerifyCommandHandler 
     : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResponse>>
 {
+
+    private readonly IJwtService _JwtService;
+    private readonly ISrpSessionStore _sessionStore;
+
+    public LoginVerifyCommandHandler(IJwtService jwtService, ISrpSessionStore srpSessionStore)
+    {
+        _JwtService = jwtService;
+        _sessionStore = srpSessionStore;
+    }
     public async Task<Result<LoginVerifyResponse>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
     {
         Guid sessionIdGuid = Guid.Parse(request.SessionId);
         
-        var session = sessionStore.GetSession(sessionIdGuid);
+        var session = _sessionStore.GetSession(sessionIdGuid);
 
         if (session == null) return Result<LoginVerifyResponse>.Failure("Session not found.");
 
@@ -24,7 +33,8 @@ public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
         try
         {
             byte[] M1Byte = Convert.FromBase64String(request.M1);
-            clientM1 = new BigInteger(1,M1Byte);
+
+            clientM1 = new BigInteger(1, M1Byte);
         }
         catch (FormatException)
         {
@@ -44,10 +54,12 @@ public class LoginVerifyCommandHandler (ISrpSessionStore sessionStore)
         if(!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials.");
 
         var serverM2 = session.CalculateServerEvidenceMessage();
-        
-        if(!sessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
+        var userId = _sessionStore.GetUserId(sessionIdGuid);
+        var token = await _JwtService.JwtTokenService(userId);
 
-        var response = new LoginVerifyResponse(Convert.ToBase64String(serverM2.ToByteArrayUnsigned()));
+        if (!_sessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
+
+        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString());
         
         return Result<LoginVerifyResponse>.Success(response);
     }
