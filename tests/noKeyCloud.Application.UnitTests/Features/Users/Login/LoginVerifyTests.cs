@@ -1,11 +1,13 @@
 ﻿
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
 using noKeyCloud.Domain.Entities;
+using noKeyCloud.Infrastructure.Services;
 using Org.BouncyCastle.Crypto.Agreement.Srp;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Security;
@@ -21,10 +23,12 @@ public class LoginVerifyTests
     public LoginVerifyTests()
     {
         _sessionStoreMock = new Mock<ISrpSessionStore>();
+
+        IConfiguration configuration = new ConfigurationBuilder().Build();
         
-        IJwtService jwtServiceMock = new Mock<IJwtService>().Object;
+        IJwtService jwtService = new JwtService(configuration);
         
-        _handler = new LoginVerifyCommandHandler(jwtServiceMock, _sessionStoreMock.Object);
+        _handler = new LoginVerifyCommandHandler(jwtService, _sessionStoreMock.Object);
     }
 
     [Fact]
@@ -47,6 +51,10 @@ public class LoginVerifyTests
     [Fact]
     public async Task Handle_WhenM1IsValid_ShouldReturnSuccess()
     {
+        Environment.SetEnvironmentVariable("JwtSettings__SecretKey",
+            "kjahsrgo93qw7rtgakhsdfglasjeywurt2oip813eydalkqsjhgflae7jk346ol2138yr");
+        
+        
         BigInteger N = new BigInteger("32317006071311007300714876688669951960444102669715484032130345427524655138867890893197201411522913463688717960921898019494119559150490921095088152386448283120630877367300996091750197750389652106796057638384067568276792218642619756161838094338476170470581645852036305042887575891541065808607552399123930385521914333389668342420684974786564569494856176035326322058077805659331026192708460314150258592864177116725943603718461857357598351152334063994785580370721665417662212881203104945914551140008147396357886767669820042828793708588252247031092071155540224751031064253209884099238184688246467489498721336450133889385773");
         BigInteger G = BigInteger.ValueOf(2);
 
