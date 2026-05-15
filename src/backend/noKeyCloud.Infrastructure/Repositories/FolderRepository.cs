@@ -18,4 +18,26 @@ public class FolderRepository : IFolderRepository
         return await _context.Folders.FirstOrDefaultAsync(u => u.Id == folderId,
             cancellationToken);
     }
+
+    public async Task<(List<Domain.Entities.File>, List<Folder>)> GetFilesOrContentAsync(Guid folderId, Guid userId, CancellationToken cancellationToken)
+        {
+            var folder = await _context.Folders
+                .Include(f => f.Files)
+                .Include(f => f.SubFolders)
+                .FirstOrDefaultAsync(f => f.Id == folderId && f.UserId == userId, cancellationToken);
+            if (folder == null)
+            {
+                throw new Exception("Folder not found");
+            }
+            return (folder.Files.ToList(), folder.SubFolders.ToList());
+        }
+        
+        public async Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default)
+        {
+            await _context.Folders.AddAsync(folder, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        
+            return folder;
+        }
+
 }

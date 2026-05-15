@@ -14,7 +14,7 @@ public class Folder
     public DateTime UpdatedAt { get; private set; }
     
     
-    public Guid ParentFolderId { get; private set; }
+    public Guid? ParentFolderId { get; private set; }
     
     public Guid UserId { get; private set; }
     
@@ -34,7 +34,7 @@ public class Folder
     //Validation
 
     public Folder(Guid id, byte[] encryptedName, byte[] encryptedKey, DateTime createdAt, DateTime updatedAt,
-        Guid parentFolderId, Guid userId)
+        Guid? parentFolderId, Guid userId)
     {
         Id = id;
         EncryptedName = encryptedName;
