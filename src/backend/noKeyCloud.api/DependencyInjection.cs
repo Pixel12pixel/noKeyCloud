@@ -12,15 +12,7 @@ public static class DependencyInjection
     /// <param name="configuration">Builder configuration instance</param>
     public static IServiceCollection AddPresentation(this IServiceCollection services,  IConfiguration configuration)
     {
-      
-        services.AddScoped<IMediator, Mediator>();
         
-        services.AddDistributedMemoryCache();
-        
-        services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
-        
-      
-      
         var jwtSettings = configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["SecretKey"];
 

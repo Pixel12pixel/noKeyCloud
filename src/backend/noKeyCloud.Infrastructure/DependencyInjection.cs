@@ -21,6 +21,8 @@ public static class DependencyInjection
         
         // Register infrastructure services and repositories
         
+        services.AddDistributedMemoryCache();
+        
         services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
 
         services.AddScoped<IFolderRepository, FolderRepository>();
@@ -31,7 +33,7 @@ public static class DependencyInjection
         
         services.AddScoped<IFileRepository, FileRepository>();
         
-        
+        services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
         
         
         

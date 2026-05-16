@@ -68,7 +68,7 @@ public class ListContentHandlerTests
         Assert.Single(result.Value.Files);
         Assert.Single(result.Value.Folders);
 
-        // (opcjonalnie) weryfikacja, że repo było wywołane raz
+        
         repoMock.Verify(
             r => r.GetFilesOrContentAsync(folderId, userId, It.IsAny<CancellationToken>()),
             Times.Once);

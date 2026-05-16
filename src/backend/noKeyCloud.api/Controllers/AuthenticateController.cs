@@ -83,7 +83,7 @@ public class AuthenticateController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            return Unauthorized(new { Error = result.Error });
+            return Unauthorized(result.Error);
         }
 
         return Ok(result.Value);
