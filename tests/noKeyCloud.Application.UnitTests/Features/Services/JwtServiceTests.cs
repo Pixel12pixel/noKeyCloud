@@ -13,12 +13,10 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
 {
     public class JwtServiceTests
     {
-        private readonly Mock<IConfiguration> _configurationMock;
         private readonly Mock<IConfigurationSection> _jwtSettingsSectionMock;
 
         public JwtServiceTests()
         {
-            _configurationMock = new Mock<IConfiguration>();
             _jwtSettingsSectionMock = new Mock<IConfigurationSection>();
         }
 
@@ -27,11 +25,10 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
         {
 
             Environment.SetEnvironmentVariable("JwtSettings__SecretKey", null);
+            
+            IConfiguration configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
 
-            _configurationMock.Setup(c => c.GetSection("JwtSettings"))
-                .Returns(_jwtSettingsSectionMock.Object);
-
-            var jwtService = new JwtService(_configurationMock.Object);
+            var jwtService = new JwtService(configuration);
             var id = Guid.NewGuid();
 
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => jwtService.JwtTokenService(id));
@@ -44,8 +41,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
             var secretKey = "A_VERY_SECRET_KEY_THAT_IS_LONG_ENOUGH_FOR_HMACSHA256";
             Environment.SetEnvironmentVariable("JwtSettings__SecretKey", secretKey);
 
-            _configurationMock.Setup(c => c.GetSection("JwtSettings"))
-                .Returns(_jwtSettingsSectionMock.Object);
+            IConfiguration configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
 
             _jwtSettingsSectionMock.Setup(s => s["Lifetime"]).Returns("60");
 
@@ -57,7 +53,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
             validAudienceSectionMock.Setup(s => s.Value).Returns("");
             _jwtSettingsSectionMock.Setup(s => s.GetSection("ValidAudience")).Returns(validAudienceSectionMock.Object);
 
-            var jwtService = new JwtService(_configurationMock.Object);
+            var jwtService = new JwtService(configuration);
             var id = Guid.NewGuid();
 
 

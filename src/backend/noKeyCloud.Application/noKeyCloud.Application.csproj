@@ -12,8 +12,12 @@
 
     <ItemGroup>
       <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
-      <PackageReference Include="MediatR" Version="14.1.0" />
+      <PackageReference Include="MediatR" Version="12.4.1" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features\Files\" />
     </ItemGroup>
 
 </Project>

@@ -49,6 +49,13 @@ public class File
         UpdatedAt = CreatedAt;
         ParentFolderId = parentFolderId;
         UserId = userId;
+        
+    }
+
+    public void InitAdditionalData(Folder parentFolder, User user)
+    {
+        ParentFolder = parentFolder;
+        OwnerUser = user;
     }
     
     //EF
