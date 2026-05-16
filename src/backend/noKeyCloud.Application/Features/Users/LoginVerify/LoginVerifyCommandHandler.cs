@@ -8,23 +8,17 @@ using BigInteger = Org.BouncyCastle.Math.BigInteger;
 
 namespace noKeyCloud.Application.Features.Users.LoginVerify;
 
-public class LoginVerifyCommandHandler 
+public class LoginVerifyCommandHandler(
+    IJwtService jwtService,
+    ISrpSessionStore srpSessionStore,
+    IRefreshTokenProvider refreshTokenProvider)
     : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResponse>>
 {
-
-    private readonly IJwtService _JwtService;
-    private readonly ISrpSessionStore _sessionStore;
-
-    public LoginVerifyCommandHandler(IJwtService jwtService, ISrpSessionStore srpSessionStore)
-    {
-        _JwtService = jwtService;
-        _sessionStore = srpSessionStore;
-    }
     public async Task<Result<LoginVerifyResponse>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
     {
         Guid sessionIdGuid = Guid.Parse(request.SessionId);
         
-        var session = _sessionStore.GetSession(sessionIdGuid);
+        var session = srpSessionStore.GetSession(sessionIdGuid);
 
         if (session == null) return Result<LoginVerifyResponse>.Failure("Session not found.");
 
@@ -54,12 +48,21 @@ public class LoginVerifyCommandHandler
         if(!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials.");
 
         var serverM2 = session.CalculateServerEvidenceMessage();
-        var userId = _sessionStore.GetUserId(sessionIdGuid);
-        var token = await _JwtService.JwtTokenService(userId);
+        var nullableUserId = srpSessionStore.GetUserId(sessionIdGuid);
+        if (nullableUserId == null)
+        {
+            return Result<LoginVerifyResponse>.Failure("Could not retrieve user associated with the session.");
+        }
 
-        if (!_sessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
+        var userId = nullableUserId.Value;
+        var token = await jwtService.JwtTokenService(userId);
+        
+        var refreshToken = refreshTokenProvider.GenerateRefreshToken();
+        await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
 
-        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString());
+        if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
+
+        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString(), refreshToken);
         
         return Result<LoginVerifyResponse>.Success(response);
     }

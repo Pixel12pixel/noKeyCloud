@@ -7,23 +7,31 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Security;
 using BigInteger = Org.BouncyCastle.Math.BigInteger;
 
-namespace noKeyCloud_apiUnitTests.Features.Users.Login;
+namespace noKeyCloud.Application.UnitTests.Features.Users.Login;
 
 public class LoginVerifyTests
 {
     private readonly Mock<ISrpSessionStore> _sessionStoreMock;
     private readonly Mock<IJwtService> _jwtServiceMock;
     private readonly LoginVerifyCommandHandler _handler;
-    
+    private readonly Mock<IRefreshTokenProvider> _refreshTokenProviderMock;
+
     public LoginVerifyTests()
     {
         _sessionStoreMock = new Mock<ISrpSessionStore>();
+
+        _refreshTokenProviderMock = new Mock<IRefreshTokenProvider>();
+        
+        _refreshTokenProviderMock.Setup(x => x.GenerateRefreshToken())
+            .Returns("dummy-refresh-token");
+
         _jwtServiceMock = new Mock<IJwtService>();
         _jwtServiceMock
             .Setup(x => x.JwtTokenService(It.IsAny<Guid?>()))
             .ReturnsAsync("fake-jwt-token");
-         
-        _handler = new LoginVerifyCommandHandler(_jwtServiceMock.Object, _sessionStoreMock.Object);
+        
+        _handler = new LoginVerifyCommandHandler(_jwtServiceMock.Object, _sessionStoreMock.Object, _refreshTokenProviderMock.Object);
+
     }
 
     [Fact]
@@ -78,6 +86,7 @@ public class LoginVerifyTests
         var M1 = client.CalculateClientEvidenceMessage();
 
         var sessionId = Guid.NewGuid();
+        var testUserId = Guid.NewGuid();
 
         _sessionStoreMock
             .Setup(x => x.GetSession(sessionId))
@@ -85,8 +94,8 @@ public class LoginVerifyTests
         
         _sessionStoreMock
             .Setup(x => x.GetUserId(sessionId))
-            .Returns(Guid.NewGuid());
-         
+            .Returns(testUserId);
+
         _sessionStoreMock
             .Setup(x => x.DeleteSession(sessionId))
             .Returns(true);
@@ -99,6 +108,15 @@ public class LoginVerifyTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
+        
+        Assert.Equal("dummy-refresh-token", result.Value.RefreshToken);
+        
+        _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
+            It.IsAny<Guid>(),
+            "dummy-refresh-token",
+            It.IsAny<TimeSpan>(),
+            It.IsAny<CancellationToken>()
+        ), Times.Once);
     }
     
     [Fact]

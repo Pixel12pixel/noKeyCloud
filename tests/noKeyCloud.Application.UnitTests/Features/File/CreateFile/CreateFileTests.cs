@@ -3,7 +3,7 @@ using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Features.Files.CreateFile;
 using noKeyCloud.Domain.Entities;
 
-namespace noKeyCloud_apiUnitTests.Features.File.CreateFile;
+namespace noKeyCloud.Application.UnitTests.Features.File.CreateFile;
 
 public class CreateFileTests
 {
