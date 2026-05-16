@@ -1,25 +1,46 @@
-﻿using MediatR;
-using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Application.Abstractions.Services;
-using noKeyCloud.Infrastructure.Repositories;
-using noKeyCloud.Infrastructure.Services;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace noKeyCloud.api;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    /// <summary>
+    /// Configures presentation layer services, including JWT authentication.
+    /// </summary>
+    /// <param name="configuration">Builder configuration instance</param>
+    public static IServiceCollection AddPresentation(this IServiceCollection services,  IConfiguration configuration)
     {
-        services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
-
-        services.AddScoped<IFolderRepository, FolderRepository>();
         
-        services.AddScoped<IUserRepository, UserRepository>();
+        var jwtSettings = configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"];
 
-        services.AddScoped<IJwtService, JwtService>();
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            throw new ArgumentNullException(nameof(secretKey), "JWT secret key must be provided in environment variables.");
+        }
 
-        services.AddScoped<IMediator, Mediator>();
-
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuers = jwtSettings.GetSection("ValidIssuer").Get<string[]>(),
+                    ValidAudiences = jwtSettings.GetSection("ValidAudience").Get<string[]>(),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                };
+            });
+        
         return services;
     }
 }
