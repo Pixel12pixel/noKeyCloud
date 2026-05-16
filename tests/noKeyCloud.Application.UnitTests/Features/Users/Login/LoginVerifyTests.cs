@@ -7,7 +7,7 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Security;
 using BigInteger = Org.BouncyCastle.Math.BigInteger;
 
-namespace noKeyCloud_apiUnitTests.Features.Users.Login;
+namespace noKeyCloud.Application.UnitTests.Features.Users.Login;
 
 public class LoginVerifyTests
 {
