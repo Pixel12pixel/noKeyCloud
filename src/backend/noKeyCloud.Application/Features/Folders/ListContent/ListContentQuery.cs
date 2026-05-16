@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Contracts.Common;
 using noKeyCloud.Contracts.Folders;
 using System;
@@ -12,3 +13,6 @@ public record ListContentQuery(
     Guid FolderId,
     Guid UserId
     ) : IRequest<Result<ListContentResponse>>;
+
+
+

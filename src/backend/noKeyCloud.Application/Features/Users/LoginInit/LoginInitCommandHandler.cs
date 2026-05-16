@@ -63,8 +63,8 @@ public class LoginInitCommandHandler(IUserRepository userRepository, ISrpSession
         }
         
         var sessionId = Guid.NewGuid();
-        sessionStore.SaveSession(sessionId, srpServer);
-        
+        sessionStore.SaveSession(sessionId, user.Id, srpServer);
+
         var response = new LoginInitResponse(
             Convert.ToBase64String(user.Salt),
             Convert.ToBase64String(serverB.ToByteArrayUnsigned()),

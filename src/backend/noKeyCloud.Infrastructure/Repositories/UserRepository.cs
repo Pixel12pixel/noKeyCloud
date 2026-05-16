@@ -17,11 +17,18 @@ public class UserRepository : IUserRepository
     public async Task CreateUser(User user)
     {
         await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == identifier || u.Email == identifier,
+            cancellationToken);
+    }
+    
+    public async Task<User?> GetUserByUserId(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId,
             cancellationToken);
     }
 }

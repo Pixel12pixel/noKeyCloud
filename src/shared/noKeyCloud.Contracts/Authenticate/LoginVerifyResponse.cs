@@ -2,6 +2,7 @@
 
 public record LoginVerifyResponse
 (
-    string M2
-    //string PrivateKey
+    string UserId,
+    string M2,
+    string Token
 );

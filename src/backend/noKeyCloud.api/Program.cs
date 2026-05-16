@@ -1,34 +1,45 @@
-using Microsoft.EntityFrameworkCore;
-using noKeyCloud.Infrastructure;
-using Npgsql;
+
+using System.Text;
 using Scalar.AspNetCore;
-using noKeyCloud.Application.Abstractions.Services;
-using noKeyCloud.Infrastructure.Services;
-using noKeyCloud.Infrastructure.Repositories;
-using noKeyCloud.Application.Abstractions.Repositories;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using noKeyCloud.Application;
+using noKeyCloud.Infrastructure;
 
 namespace noKeyCloud.api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    /// <summary>
+    /// Main Program Entrypoint
+    /// </summary>
+    public static void Main()
     {
+        
+        // Load environment variables from .env file
         DotNetEnv.Env.Load();
 
-        var builder = WebApplication.CreateBuilder(args);
-
-        builder = AddDbContext(builder);
         
-        builder.Services.AddScoped<IFolderRepository, FolderRepository>();
-
+        
+        // Create the WebApplication builder
+        var builder = WebApplication.CreateBuilder();
+        
         builder.Services.AddControllers();
-        
+
         builder.Services.AddOpenApi();
+
+        builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddAuthorization();
         
-        builder.Services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
+        builder.Services.AddPresentation(configuration: builder.Configuration);
+        builder.Services.AddApplication();
+        builder.Services.AddInfrastructure(config: builder.Configuration);
 
+        
+        
+        // Build the application
         var app = builder.Build();
-
         
         if (app.Environment.IsDevelopment())
         {
@@ -38,39 +49,13 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
-
 
         app.MapControllers();
 
+        
+        // Run the application
         app.Run();
-    }
-    private static WebApplicationBuilder AddDbContext(WebApplicationBuilder builder)
-    {
-        var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
-        if (string.IsNullOrWhiteSpace(postgreUrl))
-        {
-            throw new InvalidOperationException("Required environment variable 'DB_HOST' is missing or empty. Configure 'DB_HOST' with the PostgreSQL connection URL before starting the application.");
-        }
-
-        var uri = new Uri(postgreUrl);
-        var userInfo = uri.UserInfo.Split(':');
-        var npgsqlBuilder = new NpgsqlConnectionStringBuilder
-        {
-            Host = uri.Host,
-            Port = uri.Port,
-            Database = uri.AbsolutePath.TrimStart('/'),
-            Username = userInfo[0],
-            Password = userInfo[1],
-            Pooling = true,
-        };
-
-        builder.Services.AddDbContext<DataContext>(opts =>
-            opts.UseNpgsql(
-                npgsqlBuilder.ConnectionString,
-                sqlOpts => sqlOpts.EnableRetryOnFailure()
-            )
-        );
-        return builder;
     }
 }
