@@ -1,8 +1,8 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Domain.Entities;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
 
@@ -11,18 +11,23 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
 {
     public async Task<CreateFolderResponse> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Temporarily convert the normal string name to byte[]
+        if (request.ParentFolderId == null)
+        {
+            throw new Exception("ParentFolderId cannot be null.");
+        }
+
+
         var temporaryNameBytes = Encoding.UTF8.GetBytes(request.FolderName);
         var emptyKeyBytes = Array.Empty<byte>();
-        
+
         if (request.ParentFolderId.HasValue && request.ParentFolderId.Value == Guid.Empty)
         {
             throw new ArgumentException("ParentFolderId cannot be Guid.Empty. Use null for root folders.", nameof(request.ParentFolderId));
         }
-        
+
         var rootFolderId = GenerateRootFolderId(request.UserId);
         var parentFolderId = request.ParentFolderId ?? null;
-        
+
         var now = DateTime.UtcNow;
         var folder = new Folder(
             id: Guid.NewGuid(),
@@ -33,15 +38,16 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
             parentFolderId: parentFolderId,
             userId: request.UserId
         );
-        
+
+
         var createdFolder = await folderRepository.AddFolder(folder, cancellationToken);
 
         // TODO: Temporarily convert the byte[] back to normal string name
         var responseName = Encoding.UTF8.GetString(createdFolder.EncryptedName);
-        
+
         return new CreateFolderResponse(createdFolder.Id, responseName);
     }
-    
+
     /// Generates a unique root folder ID based on the UserId.
     private static Guid GenerateRootFolderId(Guid userId)
     {

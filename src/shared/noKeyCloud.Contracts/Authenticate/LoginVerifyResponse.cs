@@ -5,5 +5,6 @@ public record LoginVerifyResponse
     string UserId,
     string M2,
     string JwtToken,
-    string RefreshToken
+    string RefreshToken,
+    string RootFolderId
 );

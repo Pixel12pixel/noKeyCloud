@@ -1,5 +1,6 @@
 using System.Numerics;
 using MediatR;
+using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Contracts.Common;
@@ -11,9 +12,12 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
 public class LoginVerifyCommandHandler(
     IJwtService jwtService,
     ISrpSessionStore srpSessionStore,
-    IRefreshTokenProvider refreshTokenProvider)
+    IRefreshTokenProvider refreshTokenProvider,
+    IFolderRepository folderRepository)
     : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResponse>>
 {
+
+    IFolderRepository _folderRepository = folderRepository;
     public async Task<Result<LoginVerifyResponse>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
     {
         Guid sessionIdGuid = Guid.Parse(request.SessionId);
@@ -54,15 +58,17 @@ public class LoginVerifyCommandHandler(
             return Result<LoginVerifyResponse>.Failure("Could not retrieve user associated with the session.");
         }
 
+        
         var userId = nullableUserId.Value;
         var token = await jwtService.JwtTokenService(userId);
         
         var refreshToken = refreshTokenProvider.GenerateRefreshToken();
         await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
+        var RootFolder = await _folderRepository.GetUserHomeFolder(userId, cancellationToken);
 
         if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
 
-        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString(), refreshToken);
+        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString(), refreshToken, RootFolder.Id.ToString());
         
         return Result<LoginVerifyResponse>.Success(response);
     }

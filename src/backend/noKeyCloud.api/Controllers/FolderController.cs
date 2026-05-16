@@ -20,7 +20,7 @@ public class FolderController : ControllerBase
     }
     [Authorize]
     [HttpGet("GetContent")]
-    public async Task<IActionResult> GetContent([FromBody] ListContentRequest listContentRequest, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetContent([FromQuery] ListContentRequest listContentRequest, CancellationToken cancellationToken)
     {
         var query = new ListContentQuery(listContentRequest.FolderId, listContentRequest.FolderId);
         var result = await _mediator.Send(query, cancellationToken);

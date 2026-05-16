@@ -10,7 +10,8 @@ public class RegisterUserTests
     public async Task Should_register_user()
     {
         var repoMock = new Mock<IUserRepository>();
-        var handler = new RegisterUserHandler(repoMock.Object);
+        var folderRepoMock = new Mock<IFolderRepository>();
+        var handler = new RegisterUserHandler(repoMock.Object, folderRepoMock.Object);
         var cmd = new RegisterUserCommand("mine", "minipaka", new byte[] { 75 }, new byte[] { 34 });
 
         var result = await handler.Handle(cmd,  CancellationToken.None);

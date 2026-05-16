@@ -14,4 +14,6 @@ public interface IFolderRepository
     Task<(List<noKeyCloud.Domain.Entities.File>, List<Folder>)> GetFilesOrContentAsync(Guid folderId, Guid userId, CancellationToken cancellationToken);
 
     Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default);
+
+    Task<Folder> GetUserHomeFolder(Guid UserId, CancellationToken cancellationToken);
 }

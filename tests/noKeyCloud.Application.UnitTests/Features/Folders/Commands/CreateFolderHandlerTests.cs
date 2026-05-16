@@ -26,7 +26,7 @@ public class CreateFolderHandlerTests
         var command = new CreateFolderCommand(
             UserId: userId,
             FolderName: "New Project",
-            ParentFolderId: null
+            ParentFolderId: Guid.NewGuid()
         );
         
         _folderRepositoryMock
@@ -50,7 +50,7 @@ public class CreateFolderHandlerTests
                 It.Is<Folder>(f => 
                     f.UserId == command.UserId && 
                     Encoding.UTF8.GetString(f.EncryptedName) == command.FolderName && 
-                    f.ParentFolderId == null),
+                    f.ParentFolderId == command.ParentFolderId),
                 It.IsAny<CancellationToken>()), 
             Times.Once);
     }
@@ -100,7 +100,7 @@ public class CreateFolderHandlerTests
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
             FolderName: "Failed Folder",
-            ParentFolderId: null
+            ParentFolderId: Guid.NewGuid()
         );
         
         var innerException = new Exception("Database constraint violation");
@@ -123,7 +123,7 @@ public class CreateFolderHandlerTests
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
             FolderName: "Canceled Folder",
-            ParentFolderId: null
+            ParentFolderId: Guid.NewGuid()
         );
         
         var cancellationTokenSource = new CancellationTokenSource();

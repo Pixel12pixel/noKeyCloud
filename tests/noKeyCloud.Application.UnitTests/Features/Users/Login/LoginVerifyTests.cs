@@ -1,6 +1,8 @@
 ﻿using System.Text;
 using Moq;
 using noKeyCloud.Application.Abstractions.Services;
+using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Domain.Entities;
 using noKeyCloud.Application.Features.Users.LoginVerify;
 using Org.BouncyCastle.Crypto.Agreement.Srp;
 using Org.BouncyCastle.Crypto.Digests;
@@ -15,6 +17,7 @@ public class LoginVerifyTests
     private readonly Mock<IJwtService> _jwtServiceMock;
     private readonly LoginVerifyCommandHandler _handler;
     private readonly Mock<IRefreshTokenProvider> _refreshTokenProviderMock;
+    private readonly Mock<IFolderRepository> _folderRepositoryMock;
 
     public LoginVerifyTests()
     {
@@ -29,8 +32,10 @@ public class LoginVerifyTests
         _jwtServiceMock
             .Setup(x => x.JwtTokenService(It.IsAny<Guid?>()))
             .ReturnsAsync("fake-jwt-token");
+            
+        _folderRepositoryMock = new Mock<IFolderRepository>();
         
-        _handler = new LoginVerifyCommandHandler(_jwtServiceMock.Object, _sessionStoreMock.Object, _refreshTokenProviderMock.Object);
+        _handler = new LoginVerifyCommandHandler(_jwtServiceMock.Object, _sessionStoreMock.Object, _refreshTokenProviderMock.Object, _folderRepositoryMock.Object);
 
     }
 
@@ -87,6 +92,13 @@ public class LoginVerifyTests
 
         var sessionId = Guid.NewGuid();
         var testUserId = Guid.NewGuid();
+        var testRootFolderId = Guid.NewGuid();
+        
+        var mockFolder = (Folder)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(Folder));
+        typeof(Folder).GetProperty("Id").SetValue(mockFolder, testRootFolderId);
+        typeof(Folder).GetProperty("UserId").SetValue(mockFolder, testUserId);
+        
+        _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
 
         _sessionStoreMock
             .Setup(x => x.GetSession(sessionId))
@@ -110,6 +122,7 @@ public class LoginVerifyTests
         Assert.True(result.IsSuccess);
         
         Assert.Equal("dummy-refresh-token", result.Value.RefreshToken);
+        Assert.Equal(testRootFolderId.ToString(), result.Value.RootFolderId);
         
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             It.IsAny<Guid>(),
