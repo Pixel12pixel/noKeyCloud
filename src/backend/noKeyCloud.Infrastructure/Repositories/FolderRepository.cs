@@ -1,18 +1,25 @@
-using noKeyCloud.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Domain.Entities;
 
+namespace noKeyCloud.Infrastructure.Repositories;
 
-namespace noKeyCloud.Infrastructure.Repositories
+public class FolderRepository : IFolderRepository
 {
-    public class FolderRepository : IFolderRepository
+    private readonly DataContext _context;
+    
+    public FolderRepository(DataContext context)
     {
-        private readonly DataContext _context;
-        public FolderRepository(DataContext context)
-        {
-            _context = context;
-        }
-        public async Task<(List<Domain.Entities.File>, List<Folder>)> GetFilesOrContentAsync(Guid folderId, Guid userId, CancellationToken cancellationToken)
+        _context = context;
+    }
+    
+    public async Task<Folder?> GetFolderByFolderId(Guid folderId, CancellationToken cancellationToken)
+    {
+        return await _context.Folders.FirstOrDefaultAsync(u => u.Id == folderId,
+            cancellationToken);
+    }
+
+    public async Task<(List<Domain.Entities.File>, List<Folder>)> GetFilesOrContentAsync(Guid folderId, Guid userId, CancellationToken cancellationToken)
         {
             var folder = await _context.Folders
                 .Include(f => f.Files)
@@ -32,5 +39,5 @@ namespace noKeyCloud.Infrastructure.Repositories
         
             return folder;
         }
-    }
+
 }
