@@ -1,9 +1,11 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
+using noKeyCloud.Application.Features.Users.Logout;
 using noKeyCloud.Application.Features.Users.RefreshSession;
 
 namespace noKeyCloud.api.Controllers;
@@ -87,5 +89,32 @@ public class AuthenticateController : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+    
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout([FromBody] LogoutUserRequest request)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("User context is invalid.");
+        }
+
+        var command = new LogoutUserCommand(userId, request.RefreshToken);
+        var result = await _mediator.Send(command);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+        
+        if (result.Error.Contains("Token.NotFound"))
+        {
+            return NotFound(result.Error);
+        }
+
+        return BadRequest(result.Error);
     }
 }
