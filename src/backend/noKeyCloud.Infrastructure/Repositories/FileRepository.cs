@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Domain.Entities;
 using File = noKeyCloud.Domain.Entities.File;
 
 namespace noKeyCloud.Infrastructure.Repositories;
 
-public class FileRepository :  IFileRepository
+public class FileRepository : IFileRepository
 {
     private readonly DataContext _context;
     
