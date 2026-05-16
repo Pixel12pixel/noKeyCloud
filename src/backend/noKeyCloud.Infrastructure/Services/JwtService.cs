@@ -20,7 +20,7 @@ namespace noKeyCloud.Infrastructure.Services
         public async Task<string> JwtTokenService(Guid? Id)
         {
             var JwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKeyString = Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
+            var secretKeyString = JwtSettings["SecretKey"];
 
             if (string.IsNullOrEmpty(secretKeyString))
             {
