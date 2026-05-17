@@ -1,10 +1,12 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
 using noKeyCloud.Application.Features.Users.RefreshSession;
+using noKeyCloud.Application.Features.Users.RemoveUser;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -87,5 +89,22 @@ public class AuthenticateController : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+    
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> RemoveUser([FromRoute] Guid id, [FromRoute] RemoveUserRequest request)
+    {
+        var command = new RemoveUserCommand(
+            id);
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+    
+        return BadRequest(result.Error);
     }
 }
