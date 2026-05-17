@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Contracts.Common;
 using noKeyCloud.Domain.Entities;
 
 namespace noKeyCloud.Infrastructure.Repositories;
@@ -30,5 +31,22 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId,
             cancellationToken);
+    }
+    
+    public async Task<Result> RemoveUserByUser(User user, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _context.Users.Remove(user);
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Result.Success();
+        }
+        catch (Exception e)
+        {
+            return Result.Failure(e.Message);
+        }
+    
     }
 }

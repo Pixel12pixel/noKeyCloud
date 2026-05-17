@@ -7,6 +7,7 @@ using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
 using noKeyCloud.Application.Features.Users.Logout;
 using noKeyCloud.Application.Features.Users.RefreshSession;
+using noKeyCloud.Application.Features.Users.RemoveUser;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -91,6 +92,25 @@ public class AuthenticateController : ControllerBase
         return Ok(result.Value);
     }
     
+
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> RemoveUser([FromRoute] Guid id, RemoveUserRequest request)
+    {
+        var command = new RemoveUserCommand(
+            id);
+            
+        var result = await _mediator.Send(command);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+        
+        return BadRequest(result.Error);
+    }
+
+
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout([FromBody] LogoutUserRequest request)
@@ -103,13 +123,14 @@ public class AuthenticateController : ControllerBase
         }
 
         var command = new LogoutUserCommand(userId, request.RefreshToken);
+
         var result = await _mediator.Send(command);
 
         if (result.IsSuccess)
         {
             return Ok(result.Value);
         }
-        
+
         if (result.Error.Contains("Token.NotFound"))
         {
             return NotFound(result.Error);
