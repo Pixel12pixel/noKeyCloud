@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
+using noKeyCloud.Contracts.Folders;
 
 namespace noKeyCloud.Application.Features.Folders.CreateFolder;
 

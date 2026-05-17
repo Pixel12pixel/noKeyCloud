@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
+using noKeyCloud.Contracts.Folders;
 using noKeyCloud.Domain.Entities;
 using System.Security.Cryptography;
 using System.Text;

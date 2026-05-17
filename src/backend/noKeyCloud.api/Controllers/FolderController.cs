@@ -1,10 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using noKeyCloud.api.Controllers.DTOs;
+using noKeyCloud.Application.Features.Folders.CreateFolder;
 using noKeyCloud.Application.Features.Folders.ListContent;
 using noKeyCloud.Contracts.Folders;
-using noKeyCloud.api.Controllers.DTOs;
-using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
 
 
 namespace noKeyCloud.api.Controllers;
@@ -40,7 +40,7 @@ public class FolderController : ControllerBase
             request.ParentFolderId);
 
         var response = await _mediator.Send(command, cancellationToken);
-        
+
         return Created($"/api/Folder/{response.Id}", response);
     }
 }
