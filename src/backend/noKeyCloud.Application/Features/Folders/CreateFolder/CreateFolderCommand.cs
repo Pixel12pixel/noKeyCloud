@@ -1,6 +1,7 @@
 ﻿using MediatR;
+using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
 
-namespace noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
+namespace noKeyCloud.Application.Features.Folders.CreateFolder;
 
 public record CreateFolderCommand(
     Guid UserId,

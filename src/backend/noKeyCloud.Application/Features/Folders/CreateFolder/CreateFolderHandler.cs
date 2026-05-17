@@ -1,10 +1,11 @@
 ﻿using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
 using noKeyCloud.Domain.Entities;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
+namespace noKeyCloud.Application.Features.Folders.CreateFolder;
 
 public class CreateFolderHandler(IFolderRepository folderRepository)
     : IRequestHandler<CreateFolderCommand, CreateFolderResponse>
