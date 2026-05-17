@@ -1,4 +1,4 @@
-﻿namespace noKeyCloud.Application.Features.Folders.Commands.CreateFolder;
+﻿namespace noKeyCloud.Contracts.Folders;
 
 public record CreateFolderResponse(
     Guid Id,
