@@ -1,12 +1,12 @@
 ﻿using MediatR;
-using noKeyCloud.Contracts.File;
 using noKeyCloud.Contracts.Common;
+using noKeyCloud.Contracts.File;
 
 namespace noKeyCloud.Application.Features.Files.CreateFile;
 
 public record CreateFileCommand
 (
-    string UserId,
+    Guid UserId,
     string FileName,
     string FolderId
-    ): IRequest<Result<CreateFileResponse>>;
+    ) : IRequest<Result<CreateFileResponse>>;

@@ -7,17 +7,18 @@ namespace noKeyCloud.Infrastructure.Repositories;
 public class FileRepository : IFileRepository
 {
     private readonly DataContext _context;
-    
+
     public FileRepository(DataContext context)
     {
         _context = context;
     }
 
-    public async Task CreateFile(File file,  CancellationToken cancellationToken)
+    public async Task CreateFile(File file, CancellationToken cancellationToken)
     {
         await _context.Files.AddAsync(file, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
-    
+
     public async Task<bool> FileExists(byte[] fileName, CancellationToken cancellationToken)
     {
         return await _context.Files

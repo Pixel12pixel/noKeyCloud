@@ -5,6 +5,8 @@ using noKeyCloud.api.Controllers.DTOs;
 using noKeyCloud.Application.Features.Folders.CreateFolder;
 using noKeyCloud.Application.Features.Folders.ListContent;
 using noKeyCloud.Contracts.Folders;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
 namespace noKeyCloud.api.Controllers;
@@ -22,7 +24,9 @@ public class FolderController : ControllerBase
     [HttpGet("GetContent")]
     public async Task<IActionResult> GetContent([FromQuery] ListContentRequest listContentRequest, CancellationToken cancellationToken)
     {
-        var query = new ListContentQuery(listContentRequest.FolderId, listContentRequest.FolderId);
+        var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub));
+
+        var query = new ListContentQuery(listContentRequest.FolderId, userId);
         var result = await _mediator.Send(query, cancellationToken);
         if (result.IsSuccess)
         {
@@ -34,8 +38,10 @@ public class FolderController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CreateFolderResponse>> Create([FromBody] CreateFolderRequest request, CancellationToken cancellationToken)
     {
+        var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub));
+
         var command = new CreateFolderCommand(
-            request.UserId,
+            userId,
             request.Name,
             request.ParentFolderId);
 

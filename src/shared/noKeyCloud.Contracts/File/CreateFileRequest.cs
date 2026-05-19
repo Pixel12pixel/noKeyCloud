@@ -2,7 +2,6 @@
 
 public record CreateFileRequest
 (
-    string UserId,
     string FileName,
     string FolderId
     );

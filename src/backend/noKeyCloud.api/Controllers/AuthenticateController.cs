@@ -1,13 +1,13 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using noKeyCloud.Application.Features.Users.Register;
-using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Application.Features.Users.LoginVerify;
 using noKeyCloud.Application.Features.Users.Logout;
 using noKeyCloud.Application.Features.Users.RefreshSession;
+using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Application.Features.Users.RemoveUser;
+using noKeyCloud.Contracts.Authenticate;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -37,7 +37,7 @@ public class AuthenticateController : ControllerBase
         }
         return BadRequest(result.Error);
     }
-    
+
     [HttpPost("login/srp/init")]
     public async Task<IActionResult> InitLogin([FromBody] LoginInitRequest request)
     {
@@ -52,7 +52,7 @@ public class AuthenticateController : ControllerBase
         {
             return Ok(result.Value);
         }
-    
+
         return BadRequest(result.Error);
     }
 
@@ -68,7 +68,7 @@ public class AuthenticateController : ControllerBase
         if (result.IsSuccess)
         {
 
-           return Ok(result.Value);
+            return Ok(result.Value);
         }
         else if (result.Error == "Invalid credentials" || result.Error == "Session not found." || result.Error == "SRP verification failed")
         {
@@ -77,9 +77,10 @@ public class AuthenticateController : ControllerBase
 
         return BadRequest(result.Error);
     }
-    
+
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshSession([FromBody] RefreshSessionRequest request)
+
     {
         var command = new RefreshSessionCommand(request.UserId, request.RefreshToken);
         var result = await _mediator.Send(command);
@@ -91,7 +92,7 @@ public class AuthenticateController : ControllerBase
 
         return Ok(result.Value);
     }
-    
+
 
     [Authorize]
     [HttpDelete("{id}")]
@@ -99,14 +100,14 @@ public class AuthenticateController : ControllerBase
     {
         var command = new RemoveUserCommand(
             id);
-            
+
         var result = await _mediator.Send(command);
 
         if (result.IsSuccess)
         {
             return Ok(result.Value);
         }
-        
+
         return BadRequest(result.Error);
     }
 
@@ -116,7 +117,7 @@ public class AuthenticateController : ControllerBase
     public async Task<IActionResult> Logout([FromBody] LogoutUserRequest request)
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    
+
         if (!Guid.TryParse(userIdClaim, out var userId))
         {
             return Unauthorized("User context is invalid.");

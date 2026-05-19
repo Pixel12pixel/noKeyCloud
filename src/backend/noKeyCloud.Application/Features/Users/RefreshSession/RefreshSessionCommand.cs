@@ -6,4 +6,4 @@ namespace noKeyCloud.Application.Features.Users.RefreshSession;
 
 public record RefreshSessionCommand(
     Guid UserId,
-    string RefreshToken) :  IRequest<Result<RefreshSessionResponse>>;
+    string RefreshToken) : IRequest<Result<RefreshSessionResponse>>;
