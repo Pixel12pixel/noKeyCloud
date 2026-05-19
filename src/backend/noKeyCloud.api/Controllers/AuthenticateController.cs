@@ -8,8 +8,6 @@ using noKeyCloud.Application.Features.Users.RefreshSession;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Application.Features.Users.RemoveUser;
 using noKeyCloud.Contracts.Authenticate;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -84,9 +82,7 @@ public class AuthenticateController : ControllerBase
     public async Task<IActionResult> RefreshSession([FromBody] RefreshSessionRequest request)
 
     {
-        var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub));
-
-        var command = new RefreshSessionCommand(userId, request.RefreshToken);
+        var command = new RefreshSessionCommand(request.UserId, request.RefreshToken);
         var result = await _mediator.Send(command);
 
         if (!result.IsSuccess)

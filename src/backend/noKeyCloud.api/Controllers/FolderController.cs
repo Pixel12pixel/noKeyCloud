@@ -35,7 +35,7 @@ public class FolderController : ControllerBase
         return BadRequest(result.Error);
     }
     [Authorize]
-    [HttpPost("AddFolder")]
+    [HttpPost]
     public async Task<ActionResult<CreateFolderResponse>> Create([FromBody] CreateFolderRequest request, CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub));
