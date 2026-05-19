@@ -62,7 +62,7 @@ public class CreateFileTests
             .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
-        var command = new CreateFileCommand(fakeUser.Id.ToString(), "testFileName", fakeFolder.Id.ToString());
+        var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
         
         var result = await _handler.Handle(command, CancellationToken.None);
         
@@ -114,7 +114,7 @@ public class CreateFileTests
             .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
-        var command = new CreateFileCommand(fakeUser.Id.ToString(), "testFileName", fakeFolder.Id.ToString());
+        var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
         
         var result = await _handler.Handle(command, CancellationToken.None);
         
@@ -163,7 +163,7 @@ public class CreateFileTests
             .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
-        var command = new CreateFileCommand(fakeUser.Id.ToString(), "testFileName", fakeFolder.Id.ToString());
+        var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
         
         var result = await _handler.Handle(command, CancellationToken.None);
         
