@@ -23,7 +23,11 @@ public class FileController : ControllerBase
     [HttpPost("createFile")]
     public async Task<IActionResult> CreateFile([FromBody] CreateFileRequest request)
     {
-        var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub));
+        var userIdClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Invalid token claims");
+        }
 
 
         var command = new CreateFileCommand(

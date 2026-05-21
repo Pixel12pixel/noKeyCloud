@@ -94,12 +94,18 @@ public class LoginVerifyTests
         var testUserId = Guid.NewGuid();
         var testRootFolderId = Guid.NewGuid();
         
-        var mockFolder = (Folder)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(Folder));
-        typeof(Folder).GetProperty("Id").SetValue(mockFolder, testRootFolderId);
-        typeof(Folder).GetProperty("UserId").SetValue(mockFolder, testUserId);
-        
-        _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
+        var mockFolder = new Folder(
+            testRootFolderId,
+            "Root"u8.ToArray(),
+            testUserId.ToByteArray(),
+            DateTime.UtcNow,
+            DateTime.UtcNow,
+            null,
+            Guid.Empty
+        );
 
+        _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
+        
         _sessionStoreMock
             .Setup(x => x.GetSession(sessionId))
             .Returns(server);
@@ -121,8 +127,9 @@ public class LoginVerifyTests
 
         Assert.True(result.IsSuccess);
         
-        Assert.Equal("dummy-refresh-token", result.Value.RefreshToken);
-        Assert.Equal(testRootFolderId.ToString(), result.Value.RootFolderId);
+        Assert.NotNull(result.Value);
+        Assert.Equal("dummy-refresh-token", result.Value!.RefreshToken);
+        Assert.Equal(testRootFolderId.ToString(), result.Value!.RootFolderId);
         
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             It.IsAny<Guid>(),
