@@ -70,6 +70,7 @@ public class RemoveUserTests
         var result = await _handler.Handle(command, CancellationToken.None);
         
         Assert.True(result.IsSuccess);
-        Assert.Equal("User successfully removed", result.Value.Message);
+        Assert.NotNull(result.Value);
+        Assert.Equal("User successfully removed", result.Value!.Message);
     }
 }
