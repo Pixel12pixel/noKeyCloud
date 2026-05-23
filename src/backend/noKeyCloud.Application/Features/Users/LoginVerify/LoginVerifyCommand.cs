@@ -6,4 +6,4 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
 
 public record LoginVerifyCommand(
     string SessionId,
-    string M1) : IRequest<Result<LoginVerifyResponse>>;
+    string M1) : IRequest<Result<LoginVerifyResult>>;

@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Numerics;
+﻿using System.Numerics;
 using Moq;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Application.Abstractions.Repositories;
@@ -116,7 +115,8 @@ public class LoginVerifyTests
         
         Assert.NotNull(result.Value);
         Assert.Equal("dummy-refresh-token", result.Value!.RefreshToken);
-        Assert.Equal(testRootFolderId.ToString(), result.Value!.RootFolderId);
+        Assert.NotNull(result.Value.JwtToken);
+        Assert.Equal(testRootFolderId.ToString(), result.Value!.ResponsePayload.RootFolderId);
         
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             It.IsAny<Guid>(),

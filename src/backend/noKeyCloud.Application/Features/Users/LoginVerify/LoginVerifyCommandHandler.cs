@@ -9,22 +9,22 @@ using noKeyCloud.Contracts.Common;
 
 namespace noKeyCloud.Application.Features.Users.LoginVerify;
 
-public class LoginVerifyCommandHandler(
-    IJwtService jwtService,
-    ISrpSessionStore srpSessionStore,
-    IRefreshTokenProvider refreshTokenProvider,
-    IFolderRepository folderRepository)
-    : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResponse>>
-{
+    public class LoginVerifyCommandHandler(
+        IJwtService jwtService,
+        ISrpSessionStore srpSessionStore,
+        IRefreshTokenProvider refreshTokenProvider,
+        IFolderRepository folderRepository)
+        : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResult>>
+    {
 
-    public async Task<Result<LoginVerifyResponse>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LoginVerifyResult>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(request.SessionId, out Guid sessionIdGuid))
-            return Result<LoginVerifyResponse>.Failure("Invalid session ID format.");
+            return Result<LoginVerifyResult>.Failure("Invalid session ID format.");
 
         var session = srpSessionStore.GetSession(sessionIdGuid);
 
-        if (session == null) return Result<LoginVerifyResponse>.Failure("Session not found.");
+        if (session == null) return Result<LoginVerifyResult>.Failure("Session not found.");
 
         byte[] clientM1Bytes;
         try
@@ -33,7 +33,7 @@ public class LoginVerifyCommandHandler(
         }
         catch (FormatException)
         {
-            return Result<LoginVerifyResponse>.Failure("Session M1 format");
+            return Result<LoginVerifyResult>.Failure("Session M1 format");
         }
         
         var srpServer = new NativeSrpServer();
@@ -44,14 +44,14 @@ public class LoginVerifyCommandHandler(
 
             if (!CryptographicOperations.FixedTimeEquals(clientM1Bytes, expectedM1))
             {
-                return Result<LoginVerifyResponse>.Failure("Invalid credentials.");
+                return Result<LoginVerifyResult>.Failure("Invalid credentials.");
             }
 
             var serverM2 = srpServer.ComputeServerProof(session.A, clientM1Bytes, session.S);
             var nullableUserId = srpSessionStore.GetUserId(sessionIdGuid);
             if (nullableUserId == null)
             {
-                return Result<LoginVerifyResponse>.Failure("Could not retrieve user associated with the session.");
+                return Result<LoginVerifyResult>.Failure("Could not retrieve user associated with the session.");
             }
 
             var userId = nullableUserId.Value;
@@ -59,17 +59,28 @@ public class LoginVerifyCommandHandler(
 
             var refreshToken = refreshTokenProvider.GenerateRefreshToken();
             await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
-            var RootFolder = await folderRepository.GetUserHomeFolder(userId, cancellationToken);
+            var rootFolder = await folderRepository.GetUserHomeFolder(userId, cancellationToken);
 
-            if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
+            if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResult>.Failure("Could not remove session");
+            
+            var responsePayload = new LoginVerifyResponse(
+                userId.ToString(), 
+                Convert.ToBase64String(serverM2), 
+                rootFolder.Id.ToString(),
+                DateTime.UtcNow.AddMinutes(15)
+            );
+            
+            var handlerResult = new LoginVerifyResult(
+                responsePayload, 
+                token, 
+                refreshToken
+            );
 
-            var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2), token.ToString(), refreshToken, RootFolder.Id.ToString());
-
-            return Result<LoginVerifyResponse>.Success(response);
+            return Result<LoginVerifyResult>.Success(handlerResult);
         }
         catch (Exception)
         {
-            return Result<LoginVerifyResponse>.Failure("SRP verification failed");
+            return Result<LoginVerifyResult>.Failure("SRP verification failed");
         }
     }
 }
