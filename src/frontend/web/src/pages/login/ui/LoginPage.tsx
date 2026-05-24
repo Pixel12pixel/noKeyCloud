@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs, redirect, useActionData, useNavigation } from "react-router-dom";
 import { loginWithSRP } from "../api/login";
 import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
+import { saveSession } from "@/entities/session/model/session";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -14,8 +15,12 @@ export async function loginAction({ request }: ActionFunctionArgs) {
     try {
         const authData = await loginWithSRP(identifier, password);
 
-        localStorage.setItem("user_id", authData.userId);
-        localStorage.setItem("root_folder_id", authData.rootFolderId);
+        saveSession({
+            userId: authData.userId,
+            rootFolderId: authData.rootFolderId,
+            accessTokenExpiresAt: authData.accessTokenExpiresAt
+        });
+
 
         // TODO: Replace with actual folder route once implemented
         return redirect("/");
