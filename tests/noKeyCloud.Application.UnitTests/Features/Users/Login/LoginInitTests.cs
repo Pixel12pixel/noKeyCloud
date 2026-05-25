@@ -3,7 +3,6 @@ using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Application.Features.Users.LoginInit;
 using noKeyCloud.Domain.Entities;
-using Org.BouncyCastle.Crypto.Agreement.Srp;
 
 namespace noKeyCloud.Application.UnitTests.Features.Users.Login;
 
@@ -68,7 +67,7 @@ public class LoginInitTests
         Assert.NotEmpty(result.Value.B);
         
         _sessionStoreMock.Verify(store => 
-            store.SaveSession(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Srp6Server>()), 
+            store.SaveSession(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<SrpSession>()), 
             Times.Once);
     }
 }

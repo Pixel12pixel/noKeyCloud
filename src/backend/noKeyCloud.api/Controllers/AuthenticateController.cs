@@ -67,8 +67,25 @@ public class AuthenticateController : ControllerBase
 
         if (result.IsSuccess)
         {
-
-            return Ok(result.Value);
+            Response.Cookies.Append("access_token", result.Value!.JwtToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/",
+                Expires = DateTime.UtcNow.AddMinutes(15)
+            });
+            
+            Response.Cookies.Append("refresh_token", result.Value!.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, 
+                SameSite = SameSiteMode.Strict,
+                Path = "/api/Authenticate/refresh",
+                Expires = DateTime.UtcNow.AddHours(24)
+            });
+            
+            return Ok(result.Value!.ResponsePayload);
         }
         else if (result.Error == "Invalid credentials" || result.Error == "Session not found." || result.Error == "SRP verification failed")
         {
@@ -80,17 +97,39 @@ public class AuthenticateController : ControllerBase
 
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshSession([FromBody] RefreshSessionRequest request)
-
     {
-        var command = new RefreshSessionCommand(request.UserId, request.RefreshToken);
+        if (!Request.Cookies.TryGetValue("refresh_token", out var refreshTokenCookie) || string.IsNullOrEmpty(refreshTokenCookie))
+        {
+            return Unauthorized("Refresh token is missing.");
+        }
+        
+        var command = new RefreshSessionCommand(request.UserId, refreshTokenCookie);
         var result = await _mediator.Send(command);
 
         if (!result.IsSuccess)
         {
             return Unauthorized(result.Error);
         }
+        
+        Response.Cookies.Append("access_token", result.Value!.JwtToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/",
+            Expires = DateTime.UtcNow.AddMinutes(15)
+        });
+        
+        Response.Cookies.Append("refresh_token", result.Value!.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/Authenticate/refresh",
+            Expires = DateTime.UtcNow.AddHours(24)
+        });
 
-        return Ok(result.Value);
+        return Ok(result.Value!.ResponsePayload);
     }
 
 
@@ -114,7 +153,7 @@ public class AuthenticateController : ControllerBase
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout([FromBody] LogoutUserRequest request)
+    public async Task<IActionResult> Logout()
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -122,19 +161,24 @@ public class AuthenticateController : ControllerBase
         {
             return Unauthorized("User context is invalid.");
         }
+        
+        Request.Cookies.TryGetValue("refresh_token", out var refreshTokenCookie);
 
-        var command = new LogoutUserCommand(userId, request.RefreshToken);
+        var command = new LogoutUserCommand(userId, refreshTokenCookie ?? "");
 
         var result = await _mediator.Send(command);
+        
+        Response.Cookies.Delete("access_token", new CookieOptions { Path = "/" });
+        Response.Cookies.Delete("refresh_token", new CookieOptions { Path = "/api/Authenticate/refresh" });
 
         if (result.IsSuccess)
         {
-            return Ok(result.Value);
+            return Ok();
         }
 
-        if (result.Error.Contains("Token.NotFound"))
+        if (result.Error != null && result.Error.Contains("Token.NotFound"))
         {
-            return NotFound(result.Error);
+            return Ok(); 
         }
 
         return BadRequest(result.Error);

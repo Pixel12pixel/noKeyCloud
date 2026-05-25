@@ -20,6 +20,13 @@ public static class DependencyInjection
         {
             throw new ArgumentNullException(nameof(secretKey), "JWT secret key must be provided in environment variables.");
         }
+        
+        if (Encoding.UTF8.GetBytes(secretKey).Length < 16)
+        {
+            throw new InvalidOperationException("CRITICAL RUNTIME ERROR: The 'JwtSettings__SecretKey' provided in your .env configuration is too short. " +
+                                                "Symmetric HS256 JWT keys must be strictly greater than 16 bytes (128-bits). " +
+                                                $"Your current key is only {Encoding.UTF8.GetBytes(secretKey).Length} bytes long. Please generate a longer secure string.");
+        }
 
         services.AddAuthentication(options =>
             {
@@ -29,6 +36,17 @@ public static class DependencyInjection
             .AddJwtBearer(options =>
             {
                 options.MapInboundClaims = false;
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (context.Request.Cookies.ContainsKey("access_token"))
+                        {
+                            context.Token = context.Request.Cookies["access_token"];
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

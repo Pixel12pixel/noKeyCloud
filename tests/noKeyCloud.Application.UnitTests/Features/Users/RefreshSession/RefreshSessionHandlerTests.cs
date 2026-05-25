@@ -36,8 +36,9 @@ public class RefreshSessionHandlerTests
         
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal("new-refresh-token", result.Value.RefreshToken);
-        Assert.Equal("new-jwt-token", result.Value.JwtToken);
+        
+        Assert.Equal("new-refresh-token", result.Value!.RefreshToken);
+        Assert.Equal("new-jwt-token", result.Value!.JwtToken);
         
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             userId, 

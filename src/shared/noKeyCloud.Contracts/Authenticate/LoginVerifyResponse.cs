@@ -4,7 +4,6 @@ public record LoginVerifyResponse
 (
     string UserId,
     string M2,
-    string JwtToken,
-    string RefreshToken,
-    string RootFolderId
+    string RootFolderId,
+    DateTime AccessTokenExpiresAt
 );

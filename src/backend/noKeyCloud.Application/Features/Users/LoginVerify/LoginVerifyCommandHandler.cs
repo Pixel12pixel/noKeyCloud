@@ -1,73 +1,86 @@
 using MediatR;
+using System.Numerics;
+using System.Security.Cryptography;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
+using noKeyCloud.Application.Security;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Contracts.Common;
-using Org.BouncyCastle.Crypto;
-using BigInteger = Org.BouncyCastle.Math.BigInteger;
 
 namespace noKeyCloud.Application.Features.Users.LoginVerify;
 
-public class LoginVerifyCommandHandler(
-    IJwtService jwtService,
-    ISrpSessionStore srpSessionStore,
-    IRefreshTokenProvider refreshTokenProvider,
-    IFolderRepository folderRepository)
-    : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResponse>>
-{
-
-    public async Task<Result<LoginVerifyResponse>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
+    public class LoginVerifyCommandHandler(
+        IJwtService jwtService,
+        ISrpSessionStore srpSessionStore,
+        IRefreshTokenProvider refreshTokenProvider,
+        IFolderRepository folderRepository)
+        : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResult>>
     {
-        Guid sessionIdGuid = Guid.Parse(request.SessionId);
+
+    public async Task<Result<LoginVerifyResult>> Handle(LoginVerifyCommand request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(request.SessionId, out Guid sessionIdGuid))
+            return Result<LoginVerifyResult>.Failure("Invalid session ID format.");
 
         var session = srpSessionStore.GetSession(sessionIdGuid);
 
-        if (session == null) return Result<LoginVerifyResponse>.Failure("Session not found.");
+        if (session == null) return Result<LoginVerifyResult>.Failure("Session not found.");
 
-        BigInteger clientM1;
-
+        byte[] clientM1Bytes;
         try
         {
-            byte[] M1Byte = Convert.FromBase64String(request.M1);
-
-            clientM1 = new BigInteger(1, M1Byte);
+            clientM1Bytes = Convert.FromBase64String(request.M1);
         }
         catch (FormatException)
         {
-            return Result<LoginVerifyResponse>.Failure("Session M1 format");
+            return Result<LoginVerifyResult>.Failure("Session M1 format");
         }
+        
+        var srpServer = new NativeSrpServer();
 
-        bool isValid;
         try
         {
-            isValid = session.VerifyClientEvidenceMessage(clientM1);
+            var expectedM1 = srpServer.ComputeExpectedClientProof(session.Username, session.Salt, session.A, session.B, session.S);
+
+            if (!CryptographicOperations.FixedTimeEquals(clientM1Bytes, expectedM1))
+            {
+                return Result<LoginVerifyResult>.Failure("Invalid credentials.");
+            }
+
+            var serverM2 = srpServer.ComputeServerProof(session.A, clientM1Bytes, session.S);
+            var nullableUserId = srpSessionStore.GetUserId(sessionIdGuid);
+            if (nullableUserId == null)
+            {
+                return Result<LoginVerifyResult>.Failure("Could not retrieve user associated with the session.");
+            }
+
+            var userId = nullableUserId.Value;
+            var token = await jwtService.JwtTokenService(userId);
+
+            var refreshToken = refreshTokenProvider.GenerateRefreshToken();
+            await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
+            var rootFolder = await folderRepository.GetUserHomeFolder(userId, cancellationToken);
+
+            if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResult>.Failure("Could not remove session");
+            
+            var responsePayload = new LoginVerifyResponse(
+                userId.ToString(), 
+                Convert.ToBase64String(serverM2), 
+                rootFolder.Id.ToString(),
+                DateTime.UtcNow.AddMinutes(15)
+            );
+            
+            var handlerResult = new LoginVerifyResult(
+                responsePayload, 
+                token, 
+                refreshToken
+            );
+
+            return Result<LoginVerifyResult>.Success(handlerResult);
         }
-        catch (CryptoException)
+        catch (Exception)
         {
-            return Result<LoginVerifyResponse>.Failure("SRP verification failed");
+            return Result<LoginVerifyResult>.Failure("SRP verification failed");
         }
-
-        if (!isValid) return Result<LoginVerifyResponse>.Failure("Invalid credentials.");
-
-        var serverM2 = session.CalculateServerEvidenceMessage();
-        var nullableUserId = srpSessionStore.GetUserId(sessionIdGuid);
-        if (nullableUserId == null)
-        {
-            return Result<LoginVerifyResponse>.Failure("Could not retrieve user associated with the session.");
-        }
-
-
-        var userId = nullableUserId.Value;
-        var token = await jwtService.JwtTokenService(userId);
-
-        var refreshToken = refreshTokenProvider.GenerateRefreshToken();
-        await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
-        var RootFolder = await folderRepository.GetUserHomeFolder(userId, cancellationToken);
-
-        if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResponse>.Failure("Could not remove session");
-
-        var response = new LoginVerifyResponse(userId.ToString(), Convert.ToBase64String(serverM2.ToByteArrayUnsigned()), token.ToString(), refreshToken, RootFolder.Id.ToString());
-
-        return Result<LoginVerifyResponse>.Success(response);
     }
 }
