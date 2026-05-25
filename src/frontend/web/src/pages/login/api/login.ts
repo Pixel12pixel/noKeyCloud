@@ -74,7 +74,7 @@ export const loginWithSRP = async (username: string, password: string) => {
         body: JSON.stringify({ sessionId, m1: bytesToBase64(M1) })
     });
 
-    if (!verifyRes.ok) throw new Error('SRP verification failed');
+    if (!verifyRes.ok) throw new Error('Invalid credentials');
 
     const authData = await verifyRes.json();
 

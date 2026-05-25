@@ -2,6 +2,7 @@ import { type ActionFunctionArgs, redirect, useActionData, useNavigation } from 
 import { loginWithSRP } from "../api/login";
 import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
 import { saveSession } from "@/entities/session/model/session";
+import { useEffect } from "react";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -35,6 +36,10 @@ export function LoginPage() {
     const isSubmitting = navigation.state === "submitting";
 
     const errorMessage = actionData?.error?.errors?.body?.[0];
+
+    useEffect(() => {
+        document.title = "Login - noKeyCloud";
+    }, []);
 
     return (
         <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
