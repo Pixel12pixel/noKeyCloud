@@ -137,4 +137,21 @@ public class CreateFolderHandlerTests
 
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
+    
+    [Fact]
+    public async Task Handle_WithNullParentFolderId_ShouldThrowException_SoASecondRootFolderCannotBeCreated()
+    {
+        var command = new CreateFolderCommand(
+            UserId: Guid.NewGuid(),
+            FolderName: "Another Root Folder Attempt",
+            ParentFolderId: null
+        );
+        
+        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        
+        var exception = await Assert.ThrowsAsync<Exception>(act);
+        Assert.Equal("ParentFolderId cannot be null.", exception.Message);
+        
+        _folderRepositoryMock.Verify(x => x.AddFolder(It.IsAny<Folder>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

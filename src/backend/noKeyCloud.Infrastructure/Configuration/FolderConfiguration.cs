@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using noKeyCloud.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Text;
 
 namespace noKeyCloud.Infrastructure.Configuration
 {
@@ -25,6 +21,11 @@ namespace noKeyCloud.Infrastructure.Configuration
                 .HasOne(u => u.User)
                 .WithMany(s => s.Folders)
                 .HasForeignKey(s => s.UserId);
+            
+            builder
+                .HasIndex(f => new { f.UserId, f.ParentFolderId })
+                .IsUnique()
+                .HasFilter("\"ParentFolderId\" IS NULL");
         }
     }
 }
