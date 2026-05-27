@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { Header } from "@/widgets/header/ui/Header";
+import { Toaster } from "@/shared/ui/sonner";
 
 export function BaseLayout() {
     return (
@@ -9,6 +10,8 @@ export function BaseLayout() {
             <main className="flex-1">
                 <Outlet />
             </main>
+
+            <Toaster richColors position="bottom-right" />
         </div>
     );
 }

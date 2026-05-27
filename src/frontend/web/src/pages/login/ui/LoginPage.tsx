@@ -1,7 +1,7 @@
-import { type ActionFunctionArgs, redirect, useActionData, useNavigation } from "react-router-dom";
+import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
 import { loginWithSRP } from "../api/login";
 import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
-import { saveSession } from "@/entities/session/model/session";
+import {isSessionExpired, saveSession} from "@/entities/session/model/session";
 import { useEffect } from "react";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
@@ -22,9 +22,7 @@ export async function loginAction({ request }: ActionFunctionArgs) {
             accessTokenExpiresAt: authData.accessTokenExpiresAt
         });
 
-
-        // TODO: Replace with actual folder route once implemented
-        return redirect("/");
+        return redirect(`/folder/${authData.rootFolderId}`);
     } catch (error: any) {
         return { error: { errors: { body: [error.message || "Failed to sign in. Please verify your credentials."] } } };
     }
@@ -33,6 +31,7 @@ export async function loginAction({ request }: ActionFunctionArgs) {
 export function LoginPage() {
     const actionData = useActionData<typeof loginAction>();
     const navigation = useNavigation();
+    const navigate = useNavigate();
     const isSubmitting = navigation.state === "submitting";
 
     const errorMessage = actionData?.error?.errors?.body?.[0];
@@ -40,6 +39,17 @@ export function LoginPage() {
     useEffect(() => {
         document.title = "Login - noKeyCloud";
     }, []);
+
+    useEffect(() => {
+        if (!isSessionExpired()) {
+            const rootId = localStorage.getItem("root_folder_id");
+            if (rootId) {
+                navigate(`/folder/${rootId}`, { replace: true });
+            } else {
+                navigate("/", { replace: true });
+            }
+        }
+    }, [navigate]);
 
     return (
         <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
