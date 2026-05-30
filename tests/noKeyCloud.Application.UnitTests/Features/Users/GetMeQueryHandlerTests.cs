@@ -1,5 +1,6 @@
 ﻿using Moq;
 using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Application.Features.Folders;
 using noKeyCloud.Application.Features.Users.GetMe;
 using noKeyCloud.Domain.Entities;
 
@@ -21,20 +22,21 @@ public class GetMeQueryHandlerTests
     {
         var userId = Guid.NewGuid();
         var query = new GetMeQuery(userId);
-        
+
         var user = new User(userId, "test@email.com", "testUser", new byte[] { 1 }, new byte[] { 2 });
-        
+
         _userRepositoryMock
             .Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
-        
+
         var result = await _handler.Handle(query, CancellationToken.None);
-        
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Equal(userId.ToString(), result.Value.UserId);
         Assert.Equal("testUser", result.Value.Username);
         Assert.Equal("test@email.com", result.Value.Email);
+        Assert.Equal(FolderIdHelper.GenerateRootFolderId(userId).ToString(), result.Value.RootFolderId);
     }
 
     [Fact]
@@ -46,9 +48,9 @@ public class GetMeQueryHandlerTests
         _userRepositoryMock
             .Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
-        
+
         var result = await _handler.Handle(query, CancellationToken.None);
-        
+
         Assert.False(result.IsSuccess);
         Assert.Equal("User not found.", result.Error);
         Assert.Null(result.Value);

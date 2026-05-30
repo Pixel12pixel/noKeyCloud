@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
+using noKeyCloud.Application.Features.Folders;
 using noKeyCloud.Contracts.Common;
 using noKeyCloud.Contracts.User;
 
@@ -15,11 +16,14 @@ public class GetMeQueryHandler(IUserRepository userRepository) : IRequestHandler
         {
             return Result<GetMeResponse>.Failure("User not found.");
         }
+        
+        var rootFolderId = FolderIdHelper.GenerateRootFolderId(user.Id);
 
         var response = new GetMeResponse(
             user.Id.ToString(),
             user.Username,
-            user.Email
+            user.Email,
+            rootFolderId.ToString()
         );
 
         return Result<GetMeResponse>.Success(response);
