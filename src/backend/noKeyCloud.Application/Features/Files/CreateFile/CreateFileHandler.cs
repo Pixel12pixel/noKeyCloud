@@ -46,7 +46,7 @@ public class CreateFileHandler(IFileRepository fileRepository, IUserRepository u
 
             file.InitAdditionalData(folder, user);
 
-            await fileRepository.CreateFile(file, cancellationToken);
+            await fileRepository.CreateFile(file, cancellationToken, null);
         }
         catch (Exception e)
         {
