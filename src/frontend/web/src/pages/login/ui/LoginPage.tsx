@@ -1,8 +1,9 @@
 import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
 import { loginWithSRP } from "../api/login";
 import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
-import {isSessionExpired, saveSession} from "@/entities/session/model/session";
 import { useEffect } from "react";
+import { refreshAuth } from "@/entities/session/model/authStore";
+import { useAuth } from "@/entities/session/model/useAuth";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -16,11 +17,7 @@ export async function loginAction({ request }: ActionFunctionArgs) {
     try {
         const authData = await loginWithSRP(identifier, password);
 
-        saveSession({
-            userId: authData.userId,
-            rootFolderId: authData.rootFolderId,
-            accessTokenExpiresAt: authData.accessTokenExpiresAt
-        });
+        void refreshAuth();
 
         return redirect(`/folder/${authData.rootFolderId}`);
     } catch (error: any) {
@@ -33,6 +30,7 @@ export function LoginPage() {
     const navigation = useNavigation();
     const navigate = useNavigate();
     const isSubmitting = navigation.state === "submitting";
+    const auth = useAuth();
 
     const errorMessage = actionData?.error?.errors?.body?.[0];
 
@@ -41,20 +39,16 @@ export function LoginPage() {
     }, []);
 
     useEffect(() => {
-        if (!isSessionExpired()) {
-            const rootId = localStorage.getItem("root_folder_id");
-            if (rootId) {
-                navigate(`/folder/${rootId}`, { replace: true });
-            } else {
-                navigate("/", { replace: true });
-            }
+        if (auth.status === "authenticated") {
+            const target = auth.rootFolderId ? `/folder/${auth.rootFolderId}` : "/";
+            navigate(target, { replace: true });
         }
-    }, [navigate]);
+    }, [auth.status, auth.rootFolderId, navigate]);
 
     return (
         <div className="flex flex-1 w-full items-center justify-center p-6 md:p-10">
             <div className="w-full max-w-sm">
-                <LoginForm error={errorMessage} isSubmitting={isSubmitting}/>
+                <LoginForm error={errorMessage} isSubmitting={isSubmitting} />
             </div>
         </div>
     );

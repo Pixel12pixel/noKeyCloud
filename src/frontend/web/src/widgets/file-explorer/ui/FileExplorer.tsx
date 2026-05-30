@@ -1,6 +1,7 @@
 import {
     Archive,
-    ArrowLeft, ChevronRight,
+    ArrowLeft,
+    ChevronRight,
     Code,
     File as FileIcon,
     FileText,
@@ -18,15 +19,14 @@ import {cn} from "@/shared/lib/utils.ts";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/shared/ui/table";
-import {format} from "date-fns";
-import { clearSession } from "@/entities/session/model/session";
-
+import { format } from "date-fns";
+import { setGuest } from "@/entities/session/model/authStore";
 
 async function decryptName(encryptedBase64: string): Promise<string> {
     try {
         // TODO: Replace with actual name decryption when encryption implemented
         const binString = atob(encryptedBase64);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!)
+        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
         return new TextDecoder().decode(bytes);
     } catch {
         return "Unknown File";
@@ -87,9 +87,10 @@ type SortDirection = "asc" | "desc";
 
 interface FileExplorerProps {
     folderId: string;
+    rootFolderId: string;
 }
 
-export function FileExplorer({folderId}: FileExplorerProps) {
+export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
     const navigate = useNavigate();
     const [data, setData] = useState<{ folders: any[], files: any[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -97,13 +98,23 @@ export function FileExplorer({folderId}: FileExplorerProps) {
         key: "name",
         direction: "asc"
     });
-    const rootFolderId = localStorage.getItem("root_folder_id") || "";
-    const [breadcrumbHistory, setBreadcrumbHistory] = useState<{ id: string, name: string }[]>(() => {
-        const saved = sessionStorage.getItem("breadcrumbHistory");
-        return saved ? JSON.parse(saved) : [];
-    });
+
+    const [breadcrumbHistory, setBreadcrumbHistory] = useState<{ id: string; name: string }[]>(
+        () => {
+            const saved = sessionStorage.getItem("breadcrumbHistory");
+            return saved ? JSON.parse(saved) : [];
+        }
+    );
 
     useEffect(() => {
+        if (!rootFolderId) return;
+        sessionStorage.removeItem("breadcrumbHistory");
+        setBreadcrumbHistory([{ id: rootFolderId, name: "Home" }]);
+    }, [rootFolderId]);
+
+    useEffect(() => {
+        if (!rootFolderId) return;
+
         let newHistory = [...breadcrumbHistory];
 
         if (folderId === rootFolderId) {
@@ -126,7 +137,7 @@ export function FileExplorer({folderId}: FileExplorerProps) {
                 });
 
                 if (res.status === 401) {
-                    clearSession();
+                    setGuest();
                     navigate("/login", { replace: true });
                     return;
                 }
@@ -153,7 +164,7 @@ export function FileExplorer({folderId}: FileExplorerProps) {
         };
 
         fetchData();
-    }, [folderId]);
+    }, [folderId, navigate]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(current => ({
@@ -192,6 +203,7 @@ export function FileExplorer({folderId}: FileExplorerProps) {
         }
     };
 
+    if (!rootFolderId) return null;
     if (isLoading) return <div className="p-8 text-center text-slate-500">Decrypting and loading files...</div>;
     if (!data) return null;
 

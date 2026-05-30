@@ -1,36 +1,32 @@
-import {useState, useEffect} from "react";
-import {useParams, useNavigate} from "react-router-dom";
-import {isSessionExpired} from "@/entities/session/model/session";
-import {FileExplorer} from "@/widgets/file-explorer/ui/FileExplorer";
-import {Button} from "@/shared/ui/button";
-import {FolderPlus} from "lucide-react";
-import {CreateFolderDialog} from "@/features/create-folder/ui/CreateFolderDialog";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/entities/session/model/useAuth";
+import { FileExplorer } from "@/widgets/file-explorer/ui/FileExplorer";
+import { Button } from "@/shared/ui/button";
+import { FolderPlus } from "lucide-react";
+import { CreateFolderDialog } from "@/features/create-folder/ui/CreateFolderDialog";
 
 export function DashboardPage() {
     const navigate = useNavigate();
-    const {folderId} = useParams();
+    const { folderId } = useParams();
+    const auth = useAuth();
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         document.title = "noKeyCloud";
     }, []);
 
     useEffect(() => {
-        if (isSessionExpired()) {
-            navigate("/login", {replace: true});
+        if (auth.status === "guest") {
+            navigate("/login", { replace: true });
         }
-    }, [navigate]);
+    }, [auth.status, navigate]);
 
-    const rootFolderId = localStorage.getItem("root_folder_id") ?? "";
+    const rootFolderId = auth.rootFolderId ?? "";
     const currentFolderId = folderId || rootFolderId;
 
-    if (isSessionExpired() || !currentFolderId) {
+    if (auth.status !== "authenticated" || !currentFolderId) {
         return null;
-    }
-
-    const [refreshKey, setRefreshKey] = useState(0);
-
-    if (!currentFolderId) {
-        return <div className="p-8">Please log in first.</div>;
     }
 
     return (
@@ -39,10 +35,10 @@ export function DashboardPage() {
                 <div className="flex items-center gap-2">
                     <CreateFolderDialog
                         parentId={currentFolderId}
-                        onSuccess={() => setRefreshKey(prev => prev + 1)}
+                        onSuccess={() => setRefreshKey((prev) => prev + 1)}
                     >
                         <Button>
-                            <FolderPlus className="h-4 w-4 mr-2"/>
+                            <FolderPlus className="h-4 w-4 mr-2" />
                             New Folder
                         </Button>
                     </CreateFolderDialog>
@@ -52,8 +48,11 @@ export function DashboardPage() {
                 </div>
             </div>
 
-            <FileExplorer key={refreshKey} folderId={currentFolderId}/>
+            <FileExplorer
+                key={refreshKey}
+                folderId={currentFolderId}
+                rootFolderId={rootFolderId}
+            />
         </div>
-    )
-        ;
+    );
 }
