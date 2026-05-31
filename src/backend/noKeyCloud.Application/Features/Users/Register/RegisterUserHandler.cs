@@ -24,6 +24,11 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result>
         {
             var user = new User(Guid.NewGuid(), request.Email, request.Username, request.Salt, request.Verifier);
 
+            if (user is null)
+            {
+                return Result.Failure("Failed to create user.");
+            }
+
             var temporaryNameBytes = Encoding.UTF8.GetBytes("home-" + user.Username);
             var emptyKeyBytes = Array.Empty<byte>();
             var now = DateTime.UtcNow;
@@ -38,7 +43,6 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result>
             parentFolderId: null,
             userId: user.Id
         );
-
 
             await _userRepository.CreateUser(user);
             await _folderRepository.AddFolder(rootFolder);

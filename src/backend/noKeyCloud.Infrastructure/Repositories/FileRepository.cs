@@ -40,6 +40,7 @@ public class FileRepository : IFileRepository
         else
         {
             using FileStream fs = System.IO.File.Create(filename + FileExtension);
+            System.IO.File.WriteAllBytes(filename + FileExtension, fileContent);
             await _context.Files.AddAsync(file, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }

@@ -19,6 +19,9 @@ public class DataContextFactory
                 "DB_HOST environment variable is missing.");
         }
 
+
+
+
         var uri = new Uri(postgreUrl);
         var userInfo = uri.UserInfo.Split(':');
 
@@ -32,11 +35,21 @@ public class DataContextFactory
             Pooling = true,
         };
 
+        try
+        {
+            using var connection = new NpgsqlConnection(npgsqlBuilder.ConnectionString);
+            connection.Open();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to connect to PostgreSQL using the provided DB_HOST connection URL.", ex);
+        }
+
         var optionsBuilder =
             new DbContextOptionsBuilder<DataContext>();
 
         optionsBuilder.UseNpgsql(
-            npgsqlBuilder.ConnectionString);
+            npgsqlBuilder.ConnectionString);  
 
         return new DataContext(optionsBuilder.Options);
     }

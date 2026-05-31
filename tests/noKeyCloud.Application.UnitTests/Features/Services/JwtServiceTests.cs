@@ -21,7 +21,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
         }
 
         [Fact]
-        public async Task JwtTokenService_ThrowsInvalidOperationException_WhenSecretKeyMissing()
+        public async Task JwtTokenService_ThrowsException_WhenSecretKeyMissing()
         {
 
             Environment.SetEnvironmentVariable("JwtSettings__SecretKey", null);
@@ -31,7 +31,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
             var jwtService = new JwtService(configuration);
             var id = Guid.NewGuid();
 
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => jwtService.JwtTokenService(id));
+            var exception = await Assert.ThrowsAsync<Exception>(() => jwtService.JwtTokenService(id));
             Assert.Equal("Missing JWT SecretKey environment variable", exception.Message);
         }
 

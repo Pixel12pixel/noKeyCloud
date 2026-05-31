@@ -17,8 +17,12 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
             throw new Exception("ParentFolderId cannot be null.");
         }
 
-
         var temporaryNameBytes = Encoding.UTF8.GetBytes(request.FolderName);
+
+        if (temporaryNameBytes.Length == 0)
+        {
+            throw new ArgumentException("Folder name cannot be empty.", nameof(request.FolderName));
+        }
         var emptyKeyBytes = Array.Empty<byte>();
 
         if (request.ParentFolderId.HasValue && request.ParentFolderId.Value == Guid.Empty)
