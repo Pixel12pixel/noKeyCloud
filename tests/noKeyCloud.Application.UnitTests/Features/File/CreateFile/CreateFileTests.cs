@@ -59,7 +59,7 @@ public class CreateFileTests
             .ReturnsAsync(fakeFolder);
         
         _fileRepositoryMock
-            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
+            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>(), It.Is<byte[]>(content => content == null)))
             .Returns(Task.CompletedTask);
         
         var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
@@ -111,7 +111,7 @@ public class CreateFileTests
             .ReturnsAsync((Folder?)null);
         
         _fileRepositoryMock
-            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
+            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>(), It.Is<byte[]>(content => content == null)))
             .Returns(Task.CompletedTask);
         
         var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
@@ -123,7 +123,7 @@ public class CreateFileTests
     }
     
     [Fact]
-    public async Task Handle_WhenFileExist_ShouldReturnFasle()
+    public async Task Handle_WhenFileExist_ShouldReturnFalse()
     {
         var fakeSalt = new byte[] { 1, 2, 3 };
         var fakeVerifier = new byte[256]; 
@@ -160,7 +160,7 @@ public class CreateFileTests
             .ReturnsAsync(fakeFolder);
         
         _fileRepositoryMock
-            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>()))
+            .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>(), It.Is<byte[]>(content => content == null)))
             .Returns(Task.CompletedTask);
         
         var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
@@ -169,5 +169,63 @@ public class CreateFileTests
         
         Assert.False(result.IsSuccess);
         Assert.Equal("File already exists", result.Error);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserNotFound_ShouldReturnFalse()
+    {
+        var fakeSalt = new byte[] { 1, 2, 3 };
+        var fakeVerifier = new byte[256];
+        fakeVerifier[0] = 1;
+
+        var fakeUser = new User(
+            Guid.NewGuid(),
+            "test@email.com",
+            "testuser",
+            fakeSalt,
+            fakeVerifier
+        );
+
+        var fakeFolder = new Folder(
+            Guid.NewGuid(),
+            [],
+            [],
+            DateTime.Now,
+            DateTime.Now,
+            Guid.NewGuid(),
+            fakeUser.Id
+        );
+
+        _fileRepositoryMock
+            .Setup(repo => repo.FileExists(It.IsAny<byte[]>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _userRepositoryMock
+            .Setup(repo => repo.GetUserByUserId(fakeUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        _folderRepositoryMock
+            .Setup(repo => repo.GetFolderByFolderId(fakeFolder.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fakeFolder);
+
+        var command = new CreateFileCommand(fakeUser.Id, "testFileName", fakeFolder.Id.ToString());
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("User not found", result.Error);
+    }
+
+    [Fact]
+    public async Task Handle_WhenFolderIdFormatIsInvalid_ShouldReturnFalse()
+    {
+        var userId = Guid.NewGuid();
+
+        var command = new CreateFileCommand(userId, "testFileName", "not-a-guid");
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Wrong id format", result.Error);
     }
 }
