@@ -16,7 +16,6 @@ public class CreateFileHandler(IFileRepository fileRepository, IUserRepository u
         Guid userId;
         Guid fileId = Guid.NewGuid();
         long fileSize = 0;
-        byte[] encryptedName = Encoding.UTF8.GetBytes(request.FileName);
 
         try
         {
@@ -34,30 +33,21 @@ public class CreateFileHandler(IFileRepository fileRepository, IUserRepository u
         if (user == null) return Result<CreateFileResponse>.Failure("User not found");
         if (folder == null) return Result<CreateFileResponse>.Failure("Folder not found");
 
-        if (await fileRepository.FileExists(encryptedName, cancellationToken))
-        {
-            return Result<CreateFileResponse>.Failure("File already exists");
-        }
-
         try
         {
-            var file = new File(fileId, encryptedName, string.Empty, fileSize, "/", [], [],
+            var file = new File(fileId, request.FileName, request.MimeType, fileSize, "/", request.EncryptedKey, request.Checksum,
                 folderId, userId);
 
             file.InitAdditionalData(folder, user);
 
-            await fileRepository.CreateFile(file, cancellationToken, null);
+            await fileRepository.CreateFile(file, cancellationToken);
         }
         catch (Exception e)
         {
             return Result<CreateFileResponse>.Failure(e.Message);
         }
 
-        var response = new CreateFileResponse(
-            request.FileName,
-            fileId,
-            fileSize
-        );
+        var response = new CreateFileResponse(fileId);
 
         return Result<CreateFileResponse>.Success(response);
     }

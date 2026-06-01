@@ -16,15 +16,12 @@ public class FileRepository : IFileRepository
         _context = context;
     }
 
-    public async Task CreateFile(File file, CancellationToken cancellationToken, byte[] fileContent = null)
+    public async Task CreateFile(File file, CancellationToken cancellationToken, byte[]? fileContent = null)
     {
         string storagePath = "";
         var filename = file.Id;
 
-        var exists = await FileExists(file.Id.ToByteArray(), cancellationToken);
-
-        if (exists is true &&
-            Directory.Exists(storagePath) is true
+        if (Directory.Exists(storagePath) is true
             && System.IO.File.Exists(filename + FileExtension))
         {
             try
@@ -44,11 +41,5 @@ public class FileRepository : IFileRepository
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-    }
-
-    public async Task<bool> FileExists(byte[] fileName, CancellationToken cancellationToken)
-    {
-        return await _context.Files
-            .AnyAsync(f => f.EncryptedName == fileName, cancellationToken);
     }
 }

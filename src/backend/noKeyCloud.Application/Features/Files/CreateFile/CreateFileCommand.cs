@@ -7,6 +7,9 @@ namespace noKeyCloud.Application.Features.Files.CreateFile;
 public record CreateFileCommand
 (
     Guid UserId,
-    string FileName,
+    byte[] FileName,
+    string MimeType,
+    byte[] EncryptedKey,
+    byte[] Checksum,
     string FolderId
     ) : IRequest<Result<CreateFileResponse>>;
