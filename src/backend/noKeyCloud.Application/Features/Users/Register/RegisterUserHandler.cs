@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Text;
+using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Contracts.Common;
 using noKeyCloud.Domain.Entities;
