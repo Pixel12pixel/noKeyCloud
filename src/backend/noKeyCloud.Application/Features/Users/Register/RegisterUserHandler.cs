@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Text;
+using MediatR;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Contracts.Common;
 using noKeyCloud.Domain.Entities;
@@ -15,25 +16,34 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
         {
             var user = new User(Guid.NewGuid(), request.Email, request.Username, request.Salt, request.Verifier);
 
-            var emptyNameBytes = Array.Empty<byte>(); 
+
+            if (user is null)
+            {
+                return Result.Failure("Failed to create user.");
+            }
+
+            var temporaryNameBytes = Encoding.UTF8.GetBytes("home-" + user.Username);
+
             var emptyKeyBytes = Array.Empty<byte>();
             var now = DateTime.UtcNow;
             
             var rootFolderId = FolderIdHelper.GenerateRootFolderId(user.Id);
 
             var rootFolder = new Folder(
-                id: rootFolderId,
-                encryptedName: emptyNameBytes,
-                encryptedKey: emptyKeyBytes,
-                createdAt: now,
-                updatedAt: now,
-                parentFolderId: null,
-                userId: user.Id
-            );
+
+            id: Guid.NewGuid(),
+            encryptedName: temporaryNameBytes,
+            encryptedKey: emptyKeyBytes,
+            createdAt: now,
+            updatedAt: now,
+            parentFolderId: null,
+            userId: user.Id
+        );
             
-            // TODO: wrap these two calls in a database transaction so that if the folder creation fails, the user isn't left in a broken state without a home folder.
-            await userRepository.CreateUser(user);
-            await folderRepository.AddFolder(rootFolder, cancellationToken);
+        // TODO: wrap these two calls in a database transaction so that if the folder creation fails, the user isn't left in a broken state without a home folder.
+        await userRepository.CreateUser(user);
+        await folderRepository.AddFolder(rootFolder, cancellationToken);
+
         }
         catch (Exception e)
         {
