@@ -21,7 +21,7 @@ public class LoginVerifyTests
         _sessionStoreMock = new Mock<ISrpSessionStore>();
 
         _refreshTokenProviderMock = new Mock<IRefreshTokenProvider>();
-        
+
         _refreshTokenProviderMock.Setup(x => x.GenerateRefreshToken())
             .Returns("dummy-refresh-token");
 
@@ -29,11 +29,15 @@ public class LoginVerifyTests
         _jwtServiceMock
             .Setup(x => x.JwtTokenService(It.IsAny<Guid?>()))
             .ReturnsAsync("fake-jwt-token");
-            
-        _folderRepositoryMock = new Mock<IFolderRepository>();
-        
-        _handler = new LoginVerifyCommandHandler(_jwtServiceMock.Object, _sessionStoreMock.Object, _refreshTokenProviderMock.Object, _folderRepositoryMock.Object);
 
+        _folderRepositoryMock = new Mock<IFolderRepository>();
+
+        _handler = new LoginVerifyCommandHandler(
+            _jwtServiceMock.Object,
+            _sessionStoreMock.Object,
+            _refreshTokenProviderMock.Object,
+            _folderRepositoryMock.Object
+        );
     }
 
     [Fact]
@@ -46,19 +50,19 @@ public class LoginVerifyTests
             .Returns((SrpSession?)null);
 
         var command = new LoginVerifyCommand(sessionId.ToString(), "1234567890");
-        
+
         var result = await _handler.Handle(command, CancellationToken.None);
-        
+
         Assert.False(result.IsSuccess);
         Assert.Equal("Session not found.", result.Error);
     }
-    
+
     [Fact]
     public async Task Handle_WhenM1IsValid_ShouldReturnSuccess()
     {
         var salt = new byte[] { 1, 2, 3 };
         var username = "user";
-        
+
         var sessionId = Guid.NewGuid();
         var testUserId = Guid.NewGuid();
         var testRootFolderId = Guid.NewGuid();
@@ -77,11 +81,11 @@ public class LoginVerifyTests
         var A = new BigInteger(123);
         var B = new BigInteger(456);
         var S = new BigInteger(789);
-        
+
         var expectedM1Bytes = srpServer.ComputeExpectedClientProof(username, salt, A, B, S);
         var M1 = Convert.ToBase64String(expectedM1Bytes);
 
-        var session = new SrpSession 
+        var session = new SrpSession
         {
             Username = username,
             Salt = salt,
@@ -95,7 +99,7 @@ public class LoginVerifyTests
         _sessionStoreMock
             .Setup(x => x.GetSession(sessionId))
             .Returns(session);
-        
+
         _sessionStoreMock
             .Setup(x => x.GetUserId(sessionId))
             .Returns(testUserId);
@@ -112,12 +116,12 @@ public class LoginVerifyTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        
+
         Assert.NotNull(result.Value);
         Assert.Equal("dummy-refresh-token", result.Value!.RefreshToken);
         Assert.NotNull(result.Value.JwtToken);
         Assert.Equal(testRootFolderId.ToString(), result.Value!.ResponsePayload.RootFolderId);
-        
+
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             It.IsAny<Guid>(),
             "dummy-refresh-token",
@@ -125,13 +129,13 @@ public class LoginVerifyTests
             It.IsAny<CancellationToken>()
         ), Times.Once);
     }
-    
+
     [Fact]
     public async Task Handle_WhenM1IsInvalid_ShouldReturnFailure()
     {
         var sessionId = Guid.NewGuid();
 
-        var session = new SrpSession 
+        var session = new SrpSession
         {
             Username = "user",
             Salt = new byte[] { 1, 2, 3 },
@@ -145,11 +149,11 @@ public class LoginVerifyTests
             .Returns(session);
 
         var fakeM1 = Convert.ToBase64String(new byte[] { 9, 9, 9 });
-        
+
         var command = new LoginVerifyCommand(sessionId.ToString(), fakeM1);
-        
+
         var result = await _handler.Handle(command, CancellationToken.None);
-        
+
         Assert.False(result.IsSuccess);
         Assert.Equal("Invalid credentials.", result.Error);
     }

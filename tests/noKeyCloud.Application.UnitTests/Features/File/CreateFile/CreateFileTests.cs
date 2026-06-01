@@ -8,7 +8,7 @@ namespace noKeyCloud.Application.UnitTests.Features.File.CreateFile;
 public class CreateFileTests
 {
     private readonly Mock<IFileRepository> _fileRepositoryMock;
-    private  readonly Mock<IUserRepository> _userRepositoryMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IFolderRepository> _folderRepositoryMock;
     private readonly CreateFileHandler _handler;
     
@@ -18,7 +18,7 @@ public class CreateFileTests
         _userRepositoryMock = new Mock<IUserRepository>();
         _folderRepositoryMock = new Mock<IFolderRepository>();
         
-        _handler = new CreateFileHandler(_fileRepositoryMock.Object,  _userRepositoryMock.Object,  _folderRepositoryMock.Object);
+        _handler = new CreateFileHandler(_fileRepositoryMock.Object, _userRepositoryMock.Object, _folderRepositoryMock.Object);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class CreateFileTests
     }
     
     [Fact]
-    public async Task Handle_WhenFileIdIsInvalid_ShouldReturnFalse()
+    public async Task Handle_WhenFolderNotFound_ShouldReturnFalse()
     {
         var fakeSalt = new byte[] { 1, 2, 3 };
         var fakeVerifier = new byte[256]; 
