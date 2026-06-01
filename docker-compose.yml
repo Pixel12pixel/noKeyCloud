@@ -42,7 +42,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - DB_HOST=postgres://${POSTGRES_USER:-nokeycloud_user}:${POSTGRES_PASSWORD:-nokeycloud_password}@db:5432/${POSTGRES_DB:-nokeycloud_db}
-      - JwtSettings__SecretKey=${JWT_SECRET:-Lf4KTaq4+97T69UYfZlsoRqFmSYCivEpmokIBgn/7Kg=}
+      - JwtSettings__SecretKey=${JWT_SECRET:-zwotTvJmQiQvvipwDfFZ0+r7Go3iwBbvaGlqSb0G9JhxhhCYi9K0ZIAI+tJY2Bfd
+        - qdG7e+ZcAupA+MCC+3x4RHQFQt2Ra8a5JN19YYQkwbpgBKp6+Hfrlvpl8hGR/VLU
+        - 1s16Laaoe3CL5IbpyE2JadjRubw4Xaegx2qpeSQ0THE=}
       - FRONTEND_URL=https://${DOMAIN_NAME:-localhost}:8743
     volumes:
       - app_data:/data
