@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.LoginInit;
@@ -155,7 +157,7 @@ public class AuthenticateController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         if (!Guid.TryParse(userIdClaim, out var userId))
         {
