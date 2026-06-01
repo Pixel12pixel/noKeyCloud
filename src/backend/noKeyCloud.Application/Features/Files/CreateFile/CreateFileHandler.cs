@@ -34,11 +34,6 @@ public class CreateFileHandler(IFileRepository fileRepository, IUserRepository u
         if (user == null) return Result<CreateFileResponse>.Failure("User not found");
         if (folder == null) return Result<CreateFileResponse>.Failure("Folder not found");
 
-        if (await fileRepository.FileExists(encryptedName, cancellationToken))
-        {
-            return Result<CreateFileResponse>.Failure("File already exists");
-        }
-
         try
         {
             var file = new File(fileId, encryptedName, string.Empty, fileSize, "/", [], [],

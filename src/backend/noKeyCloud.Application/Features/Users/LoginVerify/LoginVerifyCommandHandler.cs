@@ -1,5 +1,4 @@
 using MediatR;
-using System.Numerics;
 using System.Security.Cryptography;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
@@ -64,10 +63,8 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResult>.Failure("Could not remove session");
             
             var responsePayload = new LoginVerifyResponse(
-                userId.ToString(), 
-                Convert.ToBase64String(serverM2), 
-                rootFolder.Id.ToString(),
-                DateTime.UtcNow.AddMinutes(15)
+                Convert.ToBase64String(serverM2),
+                rootFolder.Id.ToString()
             );
             
             var handlerResult = new LoginVerifyResult(

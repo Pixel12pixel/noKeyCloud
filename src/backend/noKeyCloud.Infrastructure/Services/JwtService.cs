@@ -30,6 +30,7 @@ namespace noKeyCloud.Infrastructure.Services
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

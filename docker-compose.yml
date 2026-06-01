@@ -1,0 +1,74 @@
+services:
+  caddy:
+    image: caddy:alpine
+    container_name: nokeycloud-proxy
+    ports:
+      - "8780:80"
+      - "8743:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: postgres:alpine
+    container_name: nokeycloud-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nokeycloud_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nokeycloud_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nokeycloud_db}
+    volumes:
+      - db_data:/var/lib/postgresql
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: nokeycloud-redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: src/backend/noKeyCloud.api/Dockerfile
+    container_name: nokeycloud-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DB_HOST=postgres://${POSTGRES_USER:-nokeycloud_user}:${POSTGRES_PASSWORD:-nokeycloud_password}@db:5432/${POSTGRES_DB:-nokeycloud_db}
+      - JwtSettings__SecretKey=${JWT_SECRET:-zwotTvJmQiQvvipwDfFZ0+r7Go3iwBbvaGlqSb0G9JhxhhCYi9K0ZIAI+tJY2Bfd
+        - qdG7e+ZcAupA+MCC+3x4RHQFQt2Ra8a5JN19YYQkwbpgBKp6+Hfrlvpl8hGR/VLU
+        - 1s16Laaoe3CL5IbpyE2JadjRubw4Xaegx2qpeSQ0THE=}
+      - FRONTEND_URL=https://${DOMAIN_NAME:-localhost}:8743
+    volumes:
+      - app_data:/data
+      - app_config:/config
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: src/frontend/web
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=https://${DOMAIN_NAME:-localhost}:8743
+    container_name: nokeycloud-frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  redis_data:
+  app_data:
+  app_config:
+  caddy_data:
+  caddy_config:
