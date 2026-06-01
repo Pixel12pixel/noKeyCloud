@@ -2,7 +2,6 @@
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Contracts.Folders;
 using noKeyCloud.Domain.Entities;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace noKeyCloud.Application.Features.Folders.CreateFolder;
@@ -23,10 +22,9 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
 
         if (request.ParentFolderId.HasValue && request.ParentFolderId.Value == Guid.Empty)
         {
-            throw new ArgumentException("ParentFolderId cannot be Guid.Empty. Use null for root folders.", nameof(request.ParentFolderId));
+            throw new ArgumentException("ParentFolderId cannot be Guid.Empty.", nameof(request.ParentFolderId));
         }
-
-        var rootFolderId = GenerateRootFolderId(request.UserId);
+        
         var parentFolderId = request.ParentFolderId ?? null;
 
         var now = DateTime.UtcNow;
@@ -47,14 +45,5 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
         var responseName = Encoding.UTF8.GetString(createdFolder.EncryptedName);
 
         return new CreateFolderResponse(createdFolder.Id, responseName);
-    }
-
-    /// Generates a unique root folder ID based on the UserId.
-    private static Guid GenerateRootFolderId(Guid userId)
-    {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"{userId}:root"));
-        var guidBytes = new byte[16];
-        Array.Copy(hash, guidBytes, guidBytes.Length);
-        return new Guid(guidBytes);
     }
 }
