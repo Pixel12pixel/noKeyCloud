@@ -22,9 +22,8 @@ public class FileRepository : IFileRepository
         }
     }
 
-    public async Task CreateFile(File file, CancellationToken cancellationToken, byte[] fileContent = null)
+    public async Task CreateFile(File file, CancellationToken cancellationToken, byte[]? fileContent = null)
     {
-        
         var fullPath = Path.Combine(BaseStoragePath, $"{file.Id}{FileExtension}");
         
         var exists = await _context.Files.AnyAsync(f => f.Id == file.Id, cancellationToken);

@@ -1,24 +1,25 @@
 ﻿using Moq;
 using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Features.Files.CreateFile;
+using noKeyCloud.Application.Features.Files.UploadFile;
 using noKeyCloud.Domain.Entities;
 
-namespace noKeyCloud.Application.UnitTests.Features.File.CreateFile;
+namespace noKeyCloud.Application.UnitTests.Features.File.UploadFile;
 
-public class CreateFileTests
+public class UploadFileTests
 {
     private readonly Mock<IFileRepository> _fileRepositoryMock;
-    private readonly Mock<IUserRepository> _userRepositoryMock;
+    private  readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IFolderRepository> _folderRepositoryMock;
-    private readonly CreateFileHandler _handler;
+    private readonly UploadFileHandler _handler;
     
-    public CreateFileTests()
+    public UploadFileTests()
     {
         _fileRepositoryMock = new Mock<IFileRepository>();
         _userRepositoryMock = new Mock<IUserRepository>();
         _folderRepositoryMock = new Mock<IFolderRepository>();
         
-        _handler = new CreateFileHandler(_fileRepositoryMock.Object, _userRepositoryMock.Object, _folderRepositoryMock.Object);
+        _handler = new UploadFileHandler(_fileRepositoryMock.Object,  _userRepositoryMock.Object,  _folderRepositoryMock.Object);
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public class CreateFileTests
             .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>(), It.Is<byte[]>(content => content == null)))
             .Returns(Task.CompletedTask);
         
-        var command = new CreateFileCommand(fakeUser.Id, [] ,"MimeType",[],[],fakeFolder.Id.ToString());
+        var command = new UploadFileCommand(fakeUser.Id, [] ,"MimeType",0,[],[],fakeFolder.Id.ToString(),[]);
         
         var result = await _handler.Handle(command, CancellationToken.None);
         
@@ -68,7 +69,7 @@ public class CreateFileTests
     }
     
     [Fact]
-    public async Task Handle_WhenFolderNotFound_ShouldReturnFalse()
+    public async Task Handle_WhenFileIdIsInvalid_ShouldReturnFalse()
     {
         var fakeSalt = new byte[] { 1, 2, 3 };
         var fakeVerifier = new byte[256]; 
@@ -104,7 +105,7 @@ public class CreateFileTests
             .Setup(repo => repo.CreateFile(It.IsAny<noKeyCloud.Domain.Entities.File>(), It.IsAny<CancellationToken>(), It.Is<byte[]>(content => content == null)))
             .Returns(Task.CompletedTask);
         
-        var command = new CreateFileCommand(fakeUser.Id, [] ,"MimeType",[],[],fakeFolder.Id.ToString());
+        var command = new UploadFileCommand(fakeUser.Id, [] ,"MimeType",0,[],[],fakeFolder.Id.ToString(),[]);
         
         var result = await _handler.Handle(command, CancellationToken.None);
         
@@ -145,7 +146,7 @@ public class CreateFileTests
             .Setup(repo => repo.GetFolderByFolderId(fakeFolder.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fakeFolder);
 
-        var command = new CreateFileCommand(fakeUser.Id, [] ,"MimeType",[],[],fakeFolder.Id.ToString());
+        var command = new UploadFileCommand(fakeUser.Id, [] ,"MimeType",0,[],[],fakeFolder.Id.ToString(),[]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -158,7 +159,7 @@ public class CreateFileTests
     {
         var userId = Guid.NewGuid();
 
-        var command = new CreateFileCommand(Guid.NewGuid(), [] ,"MimeType",[],[],"not-guid");
+        var command = new UploadFileCommand(Guid.NewGuid(), [] ,"MimeType",0,[],[],"not-guid",[]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 

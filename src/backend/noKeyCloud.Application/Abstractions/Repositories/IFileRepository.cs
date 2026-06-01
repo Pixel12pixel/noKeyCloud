@@ -4,5 +4,5 @@ namespace noKeyCloud.Application.Abstractions.Repositories;
 
 public interface IFileRepository
 {
-    Task CreateFile(File file, CancellationToken cancellationToken, byte[] fileContent);
+    Task CreateFile(File file, CancellationToken cancellationToken, byte[]? fileContent = null);
 }

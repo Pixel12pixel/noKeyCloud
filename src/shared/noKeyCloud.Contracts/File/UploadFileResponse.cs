@@ -1,6 +1,6 @@
 ﻿namespace noKeyCloud.Contracts.File;
 
-public record CreateFileResponse
+public record UploadFileResponse
 (
     Guid FileId
-    );
+);
