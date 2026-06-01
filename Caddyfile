@@ -1,0 +1,13 @@
+# Listen on the internal container port 443
+{$DOMAIN_NAME:localhost}:443 {
+
+    # Route API requests to the .NET backend
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Route everything else to the React frontend
+    handle {
+        reverse_proxy frontend:80
+    }
+}
