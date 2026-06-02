@@ -31,7 +31,7 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
 
             var rootFolder = new Folder(
 
-            id: Guid.NewGuid(),
+            id: rootFolderId,
             encryptedName: temporaryNameBytes,
             encryptedKey: emptyKeyBytes,
             createdAt: now,
