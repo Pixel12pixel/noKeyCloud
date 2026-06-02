@@ -15,7 +15,7 @@ import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {backendBaseUrl} from "@/shared/config";
 import {Button} from "@/shared/ui/button.tsx";
-import {cn} from "@/shared/lib/utils.ts";
+import {cn, formatBytes} from "@/shared/lib/utils.ts";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/shared/ui/table";
@@ -71,15 +71,6 @@ function getFileIcon(filename: string) {
         default:
             return <FileIcon className="h-5 w-5 text-slate-500"/>;
     }
-}
-
-const formatBytes = (bytes: number, decimals = 2) => {
-    if (!+bytes) return '0 Bytes'
-    const k = 1024
-    const dm = decimals < 0 ? 0 : decimals
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
 
 type SortKey = "name" | "size" | "updatedAt";
