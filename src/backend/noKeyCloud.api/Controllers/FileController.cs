@@ -76,4 +76,22 @@ public class FileController : ControllerBase
         }
         return BadRequest(result.Error);
     }
+    [Authorize]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetFile([FromRoute] Guid id)
+    {
+        var userIdClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Invalid token claims");
+        }
+        var command = new DownloadFileCommand
+            (
+            userId,
+            id);
+
+        var result = await _mediator.Send(command);
+
+        return Ok();
+    }
 }
