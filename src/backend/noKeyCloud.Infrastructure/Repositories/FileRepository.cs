@@ -1,7 +1,5 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Contracts.Common;
 using noKeyCloud.Contracts.File;
 using File = noKeyCloud.Domain.Entities.File;
 
@@ -18,7 +16,7 @@ public class FileRepository : IFileRepository
     public FileRepository(DataContext context)
     {
         _context = context;
-        
+
         if (!Directory.Exists(BaseStoragePath))
         {
             Directory.CreateDirectory(BaseStoragePath);
@@ -28,7 +26,7 @@ public class FileRepository : IFileRepository
     public async Task CreateFile(File file, CancellationToken cancellationToken, byte[]? fileContent = null)
     {
         var fullPath = Path.Combine(BaseStoragePath, $"{file.Id}{FileExtension}");
-        
+
         var exists = await _context.Files.AnyAsync(f => f.Id == file.Id, cancellationToken);
 
         try
@@ -43,7 +41,7 @@ public class FileRepository : IFileRepository
             else
             {
                 await System.IO.File.WriteAllBytesAsync(fullPath, fileContent ?? Array.Empty<byte>(), cancellationToken);
-                
+
                 await _context.Files.AddAsync(file, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
             }
@@ -55,25 +53,42 @@ public class FileRepository : IFileRepository
 
     }
 
-    public async Task<(Guid UserId, byte[] fileContent, Guid ParentFolderId)> GetFileById(Guid fileId, Guid userId, CancellationToken cancellationToken)
+    public async Task<DownloadFileResponse> GetFileById(Guid fileId, Guid userId, CancellationToken cancellationToken)
     {
-
-
-        byte[] fileContent = null;
         var fullPath = Path.Combine(BaseStoragePath, $"{fileId}{FileExtension}");
-        var exists = await _context.Files.AnyAsync(f => f.Id == fileId, cancellationToken);
-        if (!exists)
+        var file = await _context.Files.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
+        if (file == null)
+        {
+            throw new Exception("Didnt find the file");
+        }
+
+        if (file.UserId == userId)
+        {
+            return new DownloadFileResponse
+            (
+                fileId: file.Id,
+                fileContent: await DownloadFile(file, cancellationToken),
+                parentFolderId: file.ParentFolderId
+            );
+        }
+        else
+        {
+            throw new Exception("Unauthorized access to the file.");
+        }
+
+
+    }
+
+    public async Task<byte[]> DownloadFile(File file, CancellationToken cancellationToken)
+    {
+        var fullPath = Path.Combine(BaseStoragePath, $"{file.Id}{FileExtension}");
+        if (!System.IO.File.Exists(fullPath))
         {
             throw new Exception("Couldn't find the file content.");
         }
-        var file = await _context.Files.FirstOrDefaultAsync(f => f.Id == fileId && f.UserId == userId, cancellationToken);
-
-        if(System.IO.File.Exists(fullPath))
-        {
-            fileContent = await System.IO.File.ReadAllBytesAsync(fullPath, cancellationToken);
-        }
-
-        return (file.UserId, fileContent, file.ParentFolderId);
-            
+        var fileContent = await System.IO.File.ReadAllBytesAsync(fullPath, cancellationToken);
+        return fileContent;
     }
+
+
 }
