@@ -3,6 +3,7 @@ import { LoginPage, loginAction } from "../../pages/login/ui/LoginPage";
 import { BaseLayout } from "../layouts/BaseLayout";
 import { DashboardPage} from "@/pages/dashboard/ui/DashboardPage.tsx";
 import {ErrorPage} from "@/pages/error/ui/ErrorPage.tsx";
+import {RegisterPage, registerAction} from "@/pages/register/ui/RegisterPage";
 
 const router = createBrowserRouter([
     {
@@ -17,6 +18,11 @@ const router = createBrowserRouter([
                 path: "/login",
                 element: <LoginPage />,
                 action: loginAction,
+            },
+            {
+                path: "/register",
+                element: <RegisterPage />,
+                action: registerAction,
             },
             {
                 path: "/folder/:folderId",
