@@ -12,6 +12,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
+import { generateSrpVerifier } from "@/shared/security/srp-native";
+import { backendBaseUrl } from "@/shared/config";
 
 interface AdminSetupDialogProps {
     isOpen: boolean;
@@ -19,6 +21,8 @@ interface AdminSetupDialogProps {
 }
 
 export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) {
+    const [email] = useState("admin@local.com");
+    const [username] = useState("admin");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,12 +44,30 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
         try {
             setIsSubmitting(true);
 
-            // TODO: create the master admin account
+            const { saltBase64, verifierBase64 } = await generateSrpVerifier(username, password);
+
+            const response = await fetch(`${backendBaseUrl}/api/Authenticate/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: email,
+                    username: username,
+                    salt: saltBase64,
+                    verifier: verifierBase64,
+                    inviteCode: null
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                setError(errorText || "Registration failed.");
+                return;
+            }
 
             toast.success("Admin account created successfully.");
             onComplete();
 
-        } catch (err) {
+        } catch {
             setError("Failed to set up admin account. Please try again.");
         } finally {
             setIsSubmitting(false);
