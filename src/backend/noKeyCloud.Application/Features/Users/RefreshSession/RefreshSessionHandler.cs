@@ -1,11 +1,12 @@
 ﻿using MediatR;
+using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Contracts.Authenticate;
 using noKeyCloud.Contracts.Common;
 
 namespace noKeyCloud.Application.Features.Users.RefreshSession;
 
-public class RefreshSessionHandler(IJwtService jwtService, IRefreshTokenProvider refreshTokenProvider)
+public class RefreshSessionHandler(IJwtService jwtService, IRefreshTokenProvider refreshTokenProvider, IUserRepository userRepository)
     : IRequestHandler<RefreshSessionCommand, Result<RefreshSessionResult>>
 {
     public async Task<Result<RefreshSessionResult>> Handle(RefreshSessionCommand request, CancellationToken cancellationToken)
@@ -20,7 +21,8 @@ public class RefreshSessionHandler(IJwtService jwtService, IRefreshTokenProvider
         var newRefreshToken = refreshTokenProvider.GenerateRefreshToken();
         
         await refreshTokenProvider.StoreRefreshTokenAsync(request.UserId, newRefreshToken, TimeSpan.FromHours(24), cancellationToken);
-        var newJwt = await jwtService.JwtTokenService(request.UserId);
+        var user = await userRepository.GetUserByUserId(request.UserId, cancellationToken);
+        var newJwt = await jwtService.JwtTokenService(request.UserId, user!.IsAdmin);
         
         var responsePayload = new RefreshSessionResponse(DateTime.UtcNow.AddMinutes(15));
         

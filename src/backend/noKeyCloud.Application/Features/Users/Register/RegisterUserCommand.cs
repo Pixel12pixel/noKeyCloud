@@ -7,4 +7,5 @@ public record RegisterUserCommand(
     string Username,
     string Email,
     byte[] Salt,
-    byte[] Verifier) : IRequest<Result>;
+    byte[] Verifier,
+    string? RegisterInviteCode) : IRequest<Result>;

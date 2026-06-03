@@ -12,7 +12,8 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
         IJwtService jwtService,
         ISrpSessionStore srpSessionStore,
         IRefreshTokenProvider refreshTokenProvider,
-        IFolderRepository folderRepository)
+        IFolderRepository folderRepository,
+        IUserRepository userRepository)
         : IRequestHandler<LoginVerifyCommand, Result<LoginVerifyResult>>
     {
 
@@ -54,7 +55,8 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             }
 
             var userId = nullableUserId.Value;
-            var token = await jwtService.JwtTokenService(userId);
+            var user = await userRepository.GetUserByUserId(userId, cancellationToken);
+            var token = await jwtService.JwtTokenService(userId, user!.IsAdmin);
 
             var refreshToken = refreshTokenProvider.GenerateRefreshToken();
             await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);

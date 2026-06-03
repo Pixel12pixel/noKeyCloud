@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using noKeyCloud.Application.Abstractions.Repositories;
@@ -34,8 +33,8 @@ public static class DependencyInjection
         services.AddScoped<IFileRepository, FileRepository>();
         
         services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
-        
-        
+
+        services.AddScoped<IRegisterInviteRepository, RegisterInviteRepository>();
         
         // PostgreSQL and DbContext configuration from environment variables
         

@@ -17,7 +17,7 @@ namespace noKeyCloud.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<string> JwtTokenService(Guid? Id)
+        public async Task<string> JwtTokenService(Guid? Id, bool isAdmin)
         {
             var JwtSettings = _configuration.GetSection("JwtSettings");
             var secretKeyString = JwtSettings["SecretKey"];
@@ -31,9 +31,14 @@ namespace noKeyCloud.Infrastructure.Services
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, Id.ToString()!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            if (isAdmin)
+            {
+                claims = claims.Append(new Claim(ClaimTypes.Role, "admin")).ToArray();
+            }
 
             var validIssuers = JwtSettings.GetSection("ValidIssuer").Get<string[]>() ?? Array.Empty<string>();
             var validAudiences = JwtSettings.GetSection("ValidAudience").Get<string[]>() ?? Array.Empty<string>();
@@ -44,7 +49,7 @@ namespace noKeyCloud.Infrastructure.Services
                 issuer: validIssuers.FirstOrDefault(),
                 audience: validAudiences.FirstOrDefault(),
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(JwtSettings["Lifetime"] ?? "60")),
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(JwtSettings["Lifetime"] ?? "15")),
                 signingCredentials: credentials
             );
             return new JwtSecurityTokenHandler().WriteToken(token);

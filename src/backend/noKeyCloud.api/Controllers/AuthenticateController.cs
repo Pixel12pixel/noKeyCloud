@@ -31,7 +31,9 @@ public class AuthenticateController : ControllerBase
             request.Username,
             request.Email,
             request.Salt,
-            request.Verifier);
+            request.Verifier,
+            request.RegisterInviteCode);
+        
         var result = await _mediator.Send(command);
         if (result.IsSuccess)
         {

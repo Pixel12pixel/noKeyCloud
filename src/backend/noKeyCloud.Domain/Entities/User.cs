@@ -24,6 +24,8 @@ public class User
     
     public byte[] Verifier { get; private set; }
     
+    public bool IsAdmin { get; private set; }
+    
     //Navigation
     
     private readonly List<UserKey> _userKeys = new();
@@ -52,7 +54,7 @@ public class User
     
     //Validation
 
-    public User(Guid id, string email, string username, byte[] salt, byte[] verifier)
+    public User(Guid id, string email, string username, byte[] salt, byte[] verifier, bool isAdmin = false)
     {
         Id = id;
         Email = email;
@@ -62,6 +64,7 @@ public class User
         Verifier = verifier;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;
+        IsAdmin = isAdmin;
     }
 
     public Result ChangePassword(byte[] salt, byte[] verifier)

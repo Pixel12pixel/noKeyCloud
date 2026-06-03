@@ -18,6 +18,7 @@ public class DataContext : DbContext
     public DbSet<UserKey> UserKeys { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<UserShare> UserShares { get; set; }
+    public DbSet<RegisterInvite> RegisterInvites { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
