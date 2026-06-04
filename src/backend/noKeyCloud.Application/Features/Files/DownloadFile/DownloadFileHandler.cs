@@ -11,7 +11,17 @@ namespace noKeyCloud.Application.Features.Files.DownloadFile
         {
             var response = await fileRepository.GetFileById(request.fileId, request.userId, cancellationToken);
 
-            return Result<DownloadFileResponse>.Success(response);
+            var Answer = new DownloadFileResponse
+            (
+                fileId: response.file.Id,
+                fileContent: response.content,
+                MimeType: response.file.MimeType,
+                EncryptedName: response.file.EncryptedName,
+                EncryptedKey: response.file.EncryptedKey,
+                Checksum: response.file.Checksum
+            );
+
+            return Result<DownloadFileResponse>.Success(Answer);
         }
 
     }

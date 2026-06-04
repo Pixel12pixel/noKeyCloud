@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using noKeyCloud.Application.Abstractions.Repositories;
-using noKeyCloud.Contracts.File;
 using File = noKeyCloud.Domain.Entities.File;
 
 namespace noKeyCloud.Infrastructure.Repositories;
@@ -53,7 +52,7 @@ public class FileRepository : IFileRepository
 
     }
 
-    public async Task<DownloadFileResponse> GetFileById(Guid fileId, Guid userId, CancellationToken cancellationToken)
+    public async Task<(File, byte[])> GetFileById(Guid fileId, Guid userId, CancellationToken cancellationToken)
     {
         var fullPath = Path.Combine(BaseStoragePath, $"{fileId}{FileExtension}");
         var file = await _context.Files.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
@@ -64,12 +63,8 @@ public class FileRepository : IFileRepository
 
         if (file.UserId == userId)
         {
-            return new DownloadFileResponse
-            (
-                fileId: file.Id,
-                fileContent: await DownloadFile(file, cancellationToken),
-                parentFolderId: file.ParentFolderId
-            );
+            var fileContent = await DownloadFile(file, cancellationToken);
+            return (file, fileContent);
         }
         else
         {

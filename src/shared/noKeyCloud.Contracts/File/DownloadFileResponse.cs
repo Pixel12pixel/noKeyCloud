@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace noKeyCloud.Contracts.File;
 
-namespace noKeyCloud.Contracts.File;
 public record DownloadFileResponse(
     Guid fileId,
     byte[] fileContent,
-    Guid parentFolderId
+    string MimeType,
+    byte[] EncryptedName,
+    byte[] EncryptedKey,
+    byte[] Checksum
     );

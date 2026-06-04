@@ -27,11 +27,24 @@ public class DownloadFileTests
         var fileId = Guid.NewGuid();
         var parentFolderId = Guid.NewGuid();
         var fileContent = new byte[] { 1, 2, 3 };
-        var response = new DownloadFileResponse(fileId, fileContent, parentFolderId);
+        var encryptedName = new byte[] { 10, 20 };
+        var encryptedKey = new byte[] { 30, 40 };
+        var checksum = new byte[] { 50, 60 };
+        var mimeType = "application/octet-stream";
+        var file = new noKeyCloud.Domain.Entities.File(
+            fileId,
+            encryptedName,
+            mimeType,
+            sizeBytes: fileContent.Length,
+            storagePath: "path",
+            encryptedKey,
+            checksum,
+            parentFolderId,
+            userId);
 
         _fileRepositoryMock
             .Setup(repo => repo.GetFileById(fileId, userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync((file, fileContent));
 
         var command = new DownloadFileCommand(userId, fileId);
 
@@ -41,7 +54,10 @@ public class DownloadFileTests
         Assert.NotNull(result.Value);
         Assert.Equal(fileId, result.Value.fileId);
         Assert.Equal(fileContent, result.Value.fileContent);
-        Assert.Equal(parentFolderId, result.Value.parentFolderId);
+        Assert.Equal(mimeType, result.Value.MimeType);
+        Assert.Equal(encryptedName, result.Value.EncryptedName);
+        Assert.Equal(encryptedKey, result.Value.EncryptedKey);
+        Assert.Equal(checksum, result.Value.Checksum);
     }
 
     [Fact]
