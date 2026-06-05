@@ -23,4 +23,22 @@ public class RegisterInviteRepository(DataContext context) : IRegisterInviteRepo
         context.RegisterInvites.Update(invite);
         await context.SaveChangesAsync(cancellationToken);
     }
+    
+    public async Task<IEnumerable<RegisterInvite>> GetActiveInvitesAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.RegisterInvites
+            .Where(i => !i.IsUsed && (i.ExpiresAt == null || i.ExpiresAt > DateTime.UtcNow))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<RegisterInvite?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.RegisterInvites.FindAsync(new object[] { id }, cancellationToken);
+    }
+
+    public async Task DeleteAsync(RegisterInvite invite, CancellationToken cancellationToken = default)
+    {
+        context.RegisterInvites.Remove(invite);
+        await context.SaveChangesAsync(cancellationToken);
+    }
 }
