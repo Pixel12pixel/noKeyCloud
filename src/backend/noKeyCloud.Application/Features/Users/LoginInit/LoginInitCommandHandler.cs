@@ -52,7 +52,7 @@ public class LoginInitCommandHandler(IUserRepository userRepository, ISrpSession
             };
             
             var sessionId = Guid.NewGuid();
-            sessionStore.SaveSession(sessionId, user.Id, session);
+            await sessionStore.SaveSessionAsync(sessionId, user.Id, session);
 
             var response = new LoginInitResponse(
                 Convert.ToBase64String(user.Salt),

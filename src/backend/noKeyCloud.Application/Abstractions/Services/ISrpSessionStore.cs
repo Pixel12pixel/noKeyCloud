@@ -13,8 +13,8 @@ public class SrpSession
 
 public interface ISrpSessionStore
 {
-    void SaveSession(Guid sessionId, Guid userId, SrpSession session);
-    SrpSession? GetSession(Guid sessionId);
-    Guid? GetUserId(Guid sessionId);
-    bool DeleteSession(Guid sessionId);
+    Task SaveSessionAsync(Guid sessionId, Guid userId, SrpSession session);
+    Task<SrpSession?> GetSessionAsync(Guid sessionId);
+    Task<Guid?> GetUserIdAsync(Guid sessionId);
+    Task<bool> DeleteSessionAsync(Guid sessionId);
 }
