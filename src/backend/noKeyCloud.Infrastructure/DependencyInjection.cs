@@ -17,27 +17,26 @@ public static class DependencyInjection
     /// <param name="config">Builder configuration instance</param>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        
+
         // Register infrastructure services and repositories
-        
+
         services.AddDistributedMemoryCache();
-        
+
         services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
 
         services.AddScoped<IFolderRepository, FolderRepository>();
-        
+
         services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddScoped<IJwtService, JwtService>();
-        
+
         services.AddScoped<IFileRepository, FileRepository>();
-        
+
         services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
 
         services.AddScoped<IRegisterInviteRepository, RegisterInviteRepository>();
         
         // PostgreSQL and DbContext configuration from environment variables
-        
         var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
         if (string.IsNullOrWhiteSpace(postgreUrl))
         {
@@ -56,13 +55,23 @@ public static class DependencyInjection
             Pooling = true,
         };
 
+        try
+        {
+            using var connection = new NpgsqlConnection(npgsqlBuilder.ConnectionString);
+            connection.Open();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to connect to PostgreSQL using the provided DB_HOST connection URL.", ex);
+        }
+
         services.AddDbContext<DataContext>(opts =>
             opts.UseNpgsql(
                 npgsqlBuilder.ConnectionString,
                 sqlOpts => sqlOpts.EnableRetryOnFailure()
             )
         );
-        
+
         return services;
     }
 }

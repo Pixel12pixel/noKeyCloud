@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using noKeyCloud.Application.Abstractions.Services;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -24,7 +22,7 @@ namespace noKeyCloud.Infrastructure.Services
 
             if (string.IsNullOrEmpty(secretKeyString))
             {
-                throw new InvalidOperationException("Missing JWT SecretKey environment variable");
+                throw new Exception("Missing JWT SecretKey environment variable");
             }
 
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKeyString));
