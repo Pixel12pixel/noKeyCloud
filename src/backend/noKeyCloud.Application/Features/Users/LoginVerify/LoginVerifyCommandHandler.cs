@@ -22,7 +22,7 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
         if (!Guid.TryParse(request.SessionId, out Guid sessionIdGuid))
             return Result<LoginVerifyResult>.Failure("Invalid session ID format.");
 
-        var session = srpSessionStore.GetSession(sessionIdGuid);
+        var session = await srpSessionStore.GetSessionAsync(sessionIdGuid);
 
         if (session == null) return Result<LoginVerifyResult>.Failure("Session not found.");
 
@@ -48,7 +48,7 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             }
 
             var serverM2 = srpServer.ComputeServerProof(session.A, clientM1Bytes, session.S);
-            var nullableUserId = srpSessionStore.GetUserId(sessionIdGuid);
+            var nullableUserId = await srpSessionStore.GetUserIdAsync(sessionIdGuid);
             if (nullableUserId == null)
             {
                 return Result<LoginVerifyResult>.Failure("Could not retrieve user associated with the session.");
@@ -62,7 +62,9 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             await refreshTokenProvider.StoreRefreshTokenAsync(userId, refreshToken, TimeSpan.FromHours(24), cancellationToken);
             var rootFolder = await folderRepository.GetUserHomeFolder(userId, cancellationToken);
 
-            if (!srpSessionStore.DeleteSession(sessionIdGuid)) return Result<LoginVerifyResult>.Failure("Could not remove session");
+            var deleteSession = await srpSessionStore.DeleteSessionAsync(sessionIdGuid);
+
+            if (!deleteSession) return Result<LoginVerifyResult>.Failure("Could not remove session");
             
             var responsePayload = new LoginVerifyResponse(
                 Convert.ToBase64String(serverM2),
