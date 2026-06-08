@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using noKeyCloud.Application.Abstractions.Services;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -15,24 +17,28 @@ namespace noKeyCloud.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<string> JwtTokenService(Guid? Id)
+        public async Task<string> JwtTokenService(Guid? Id, bool isAdmin)
         {
             var JwtSettings = _configuration.GetSection("JwtSettings");
             var secretKeyString = JwtSettings["SecretKey"];
 
             if (string.IsNullOrEmpty(secretKeyString))
             {
-                throw new Exception("Missing JWT SecretKey environment variable");
+                throw new InvalidOperationException("Missing JWT SecretKey environment variable");
             }
 
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKeyString));
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, Id.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, Id.ToString()!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            if (isAdmin)
+            {
+                claims = claims.Append(new Claim(ClaimTypes.Role, "admin")).ToArray();
+            }
 
             var validIssuers = JwtSettings.GetSection("ValidIssuer").Get<string[]>() ?? Array.Empty<string>();
             var validAudiences = JwtSettings.GetSection("ValidAudience").Get<string[]>() ?? Array.Empty<string>();
@@ -43,7 +49,7 @@ namespace noKeyCloud.Infrastructure.Services
                 issuer: validIssuers.FirstOrDefault(),
                 audience: validAudiences.FirstOrDefault(),
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(JwtSettings["Lifetime"] ?? "60")),
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(JwtSettings["Lifetime"] ?? "15")),
                 signingCredentials: credentials
             );
             return new JwtSecurityTokenHandler().WriteToken(token);

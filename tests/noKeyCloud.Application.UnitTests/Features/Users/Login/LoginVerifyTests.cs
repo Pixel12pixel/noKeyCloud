@@ -15,6 +15,7 @@ public class LoginVerifyTests
     private readonly LoginVerifyCommandHandler _handler;
     private readonly Mock<IRefreshTokenProvider> _refreshTokenProviderMock;
     private readonly Mock<IFolderRepository> _folderRepositoryMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
 
     public LoginVerifyTests()
     {
@@ -27,16 +28,18 @@ public class LoginVerifyTests
 
         _jwtServiceMock = new Mock<IJwtService>();
         _jwtServiceMock
-            .Setup(x => x.JwtTokenService(It.IsAny<Guid?>()))
+            .Setup(x => x.JwtTokenService(It.IsAny<Guid?>(), It.IsAny<bool>()))
             .ReturnsAsync("fake-jwt-token");
 
         _folderRepositoryMock = new Mock<IFolderRepository>();
+        _userRepositoryMock = new Mock<IUserRepository>();
 
         _handler = new LoginVerifyCommandHandler(
             _jwtServiceMock.Object,
             _sessionStoreMock.Object,
             _refreshTokenProviderMock.Object,
-            _folderRepositoryMock.Object
+            _folderRepositoryMock.Object,
+            _userRepositoryMock.Object
         );
     }
 
@@ -95,6 +98,9 @@ public class LoginVerifyTests
         };
 
         _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
+        
+        _userRepositoryMock.Setup(x => x.GetUserByUserId(testUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User(testUserId, "test@test.com", "test", new byte[0], new byte[0], true));
         
         _sessionStoreMock
             .Setup(x => x.GetSessionAsync(sessionId))

@@ -45,9 +45,12 @@ public static class DependencyInjection
 
         services.AddScoped<IFileRepository, FileRepository>();
 
+        services.AddScoped<IRegisterInviteRepository, RegisterInviteRepository>();
+        
         services.AddScoped<IRefreshTokenProvider, RefreshTokenProvider>();
         
         
+
 
         var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
         if (string.IsNullOrWhiteSpace(postgreUrl))

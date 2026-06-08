@@ -10,4 +10,5 @@ public interface IUserRepository
     Task<User?> GetUserByUsernameOrEmailAsync(string identifier, CancellationToken cancellationToken);
     Task<User?> GetUserByUserId(Guid userId, CancellationToken cancellationToken);
     Task<Result> RemoveUserByUser(User user, CancellationToken cancellationToken);
+    Task<bool> HasAnyUsersAsync(CancellationToken cancellationToken = default);
 }

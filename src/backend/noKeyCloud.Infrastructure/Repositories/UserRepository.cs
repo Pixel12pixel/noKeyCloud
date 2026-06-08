@@ -49,4 +49,9 @@ public class UserRepository : IUserRepository
         }
     
     }
+    
+    public async Task<bool> HasAnyUsersAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Users.AnyAsync(cancellationToken);
+    }
 }

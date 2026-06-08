@@ -66,3 +66,16 @@ export async function computeX(salt: Uint8Array, I: string, P: string): Promise<
     const hx = await sha256(salt, hIP);
     return bytesToBigInt(hx);
 }
+
+export async function generateSrpVerifier(username: string, password: string) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(32));
+
+    const x = await computeX(salt, username, password);
+
+    const v = modPow(g, x, N);
+
+    return {
+        saltBase64: bytesToBase64(salt),
+        verifierBase64: bytesToBase64(pad(bigIntToBytes(v)))
+    };
+}

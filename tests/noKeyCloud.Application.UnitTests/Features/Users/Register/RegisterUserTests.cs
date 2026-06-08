@@ -13,14 +13,18 @@ public class RegisterUserTests
     {
         var repoMock = new Mock<IUserRepository>();
         var folderRepoMock = new Mock<IFolderRepository>();
+        var inviteRepoMock = new Mock<IRegisterInviteRepository>();
 
-        User capturedUser = null;
+        repoMock.Setup(x => x.HasAnyUsersAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        User? capturedUser = null;
         repoMock.Setup(x => x.CreateUser(It.IsAny<User>()))
             .Callback<User>(u => capturedUser = u)
             .Returns(Task.CompletedTask);
 
-        var handler = new RegisterUserHandler(repoMock.Object, folderRepoMock.Object);
-        var cmd = new RegisterUserCommand("mine", "minipaka", new byte[] { 75 }, new byte[] { 34 });
+        var handler = new RegisterUserHandler(repoMock.Object, folderRepoMock.Object, inviteRepoMock.Object);
+        var cmd = new RegisterUserCommand("mine", "minipaka", new byte[] { 75 }, new byte[] { 34 }, null);
 
         var result = await handler.Handle(cmd, CancellationToken.None);
         

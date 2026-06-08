@@ -31,7 +31,8 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
             var jwtService = new JwtService(configuration);
             var id = Guid.NewGuid();
 
-            var exception = await Assert.ThrowsAsync<Exception>(() => jwtService.JwtTokenService(id));
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => jwtService.JwtTokenService(id, false));
+
             Assert.Equal("Missing JWT SecretKey environment variable", exception.Message);
         }
 
@@ -57,7 +58,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
             var id = Guid.NewGuid();
 
 
-            var tokenString = await jwtService.JwtTokenService(id);
+            var tokenString = await jwtService.JwtTokenService(id, true);
 
             Assert.False(string.IsNullOrEmpty(tokenString));
 
@@ -66,6 +67,7 @@ namespace noKeyCloud.Application.UnitTests.Features.Services
 
             Assert.Equal(id.ToString(), token.Subject);
             Assert.Contains(token.Claims, c => c.Type == JwtRegisteredClaimNames.Jti);
+            Assert.Contains(token.Claims, c => c.Type == ClaimTypes.Role && c.Value == "admin");
         }
     }
 }

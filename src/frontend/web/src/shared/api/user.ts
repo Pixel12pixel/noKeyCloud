@@ -5,6 +5,7 @@ export interface UserProfileResponse {
     username: string;
     email: string;
     rootFolderId: string;
+    isAdmin?: boolean;
 }
 
 export async function fetchCurrentUser(): Promise<UserProfileResponse | null> {

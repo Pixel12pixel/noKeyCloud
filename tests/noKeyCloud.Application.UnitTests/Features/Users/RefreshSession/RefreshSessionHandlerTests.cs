@@ -1,6 +1,8 @@
 ﻿using Moq;
 using noKeyCloud.Application.Abstractions.Services;
+using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Features.Users.RefreshSession;
+using noKeyCloud.Domain.Entities;
 
 namespace noKeyCloud.Application.UnitTests.Features.Users.RefreshSession;
 
@@ -8,13 +10,15 @@ public class RefreshSessionHandlerTests
 {
     private readonly Mock<IJwtService> _jwtServiceMock;
     private readonly Mock<IRefreshTokenProvider> _refreshTokenProviderMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly RefreshSessionHandler _handler;
 
     public RefreshSessionHandlerTests()
     {
         _jwtServiceMock = new Mock<IJwtService>();
         _refreshTokenProviderMock = new Mock<IRefreshTokenProvider>();
-        _handler = new RefreshSessionHandler(_jwtServiceMock.Object, _refreshTokenProviderMock.Object);
+        _userRepositoryMock = new Mock<IUserRepository>();
+        _handler = new RefreshSessionHandler(_jwtServiceMock.Object, _refreshTokenProviderMock.Object, _userRepositoryMock.Object);
     }
 
     [Fact]
@@ -29,7 +33,10 @@ public class RefreshSessionHandlerTests
         _refreshTokenProviderMock.Setup(x => x.GenerateRefreshToken())
             .Returns("new-refresh-token");
             
-        _jwtServiceMock.Setup(x => x.JwtTokenService(userId))
+        _userRepositoryMock.Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User(userId, "test@test.com", "test", new byte[0], new byte[0], false));
+
+        _jwtServiceMock.Setup(x => x.JwtTokenService(userId, false))
             .ReturnsAsync("new-jwt-token");
 
         var result = await _handler.Handle(command, CancellationToken.None);

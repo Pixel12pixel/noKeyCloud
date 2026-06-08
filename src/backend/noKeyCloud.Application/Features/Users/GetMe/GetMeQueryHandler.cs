@@ -23,7 +23,8 @@ public class GetMeQueryHandler(IUserRepository userRepository) : IRequestHandler
             user.Id.ToString(),
             user.Username,
             user.Email,
-            rootFolderId.ToString()
+            rootFolderId.ToString(),
+            IsAdmin: user.IsAdmin
         );
 
         return Result<GetMeResponse>.Success(response);

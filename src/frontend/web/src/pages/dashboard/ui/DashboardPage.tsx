@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/entities/session/model/useAuth";
 import { FileExplorer } from "@/widgets/file-explorer/ui/FileExplorer";
 import { Button } from "@/shared/ui/button";
-import { FolderPlus } from "lucide-react";
+import {FolderPlus, Upload} from "lucide-react";
 import { CreateFolderDialog } from "@/features/create-folder/ui/CreateFolderDialog";
+import { UploadFileDialog } from "@/features/upload-file/ui/UploadFileDialog";
 
 export function DashboardPage() {
     const navigate = useNavigate();
@@ -42,9 +43,15 @@ export function DashboardPage() {
                             New Folder
                         </Button>
                     </CreateFolderDialog>
-                    <Button variant="secondary">
-                        Upload File
-                    </Button>
+                    <UploadFileDialog
+                        parentId={currentFolderId}
+                        onSuccess={() => setRefreshKey((prev) => prev + 1)}
+                    >
+                        <Button variant="secondary">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload File
+                        </Button>
+                    </UploadFileDialog>
                 </div>
             </div>
 

@@ -22,7 +22,7 @@ public class CreateFileHandler(IFileRepository fileRepository, IUserRepository u
             folderId = Guid.Parse(request.FolderId);
             userId = request.UserId;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return Result<CreateFileResponse>.Failure("Wrong id format");
         }

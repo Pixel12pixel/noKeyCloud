@@ -7,7 +7,7 @@ import {Avatar, AvatarFallback} from "@/shared/ui/avatar";
 import {logoutUserApi} from "@/shared/api/logout";
 import {setGuest} from "@/entities/session/model/authStore";
 import {useAuth} from "@/entities/session/model/useAuth";
-import {Settings, LogOut} from "lucide-react";
+import {Settings, LogOut, ShieldUser} from "lucide-react";
 import { toast } from "sonner";
 import {useState} from "react";
 import {SettingsDialog} from "@/widgets/settings/ui/SettingsDialog";
@@ -47,6 +47,13 @@ export function UserProfileMenu() {
                     <DropdownMenuGroup>
                         <DropdownMenuLabel>{auth.user.username}</DropdownMenuLabel>
                         <DropdownMenuSeparator/>
+
+                        {auth.user.isAdmin && (
+                            <DropdownMenuItem onClick={() => navigate("/admin-panel")}>
+                                <ShieldUser className="mr-2 h-4 w-4"/>
+                                Admin Panel
+                            </DropdownMenuItem>
+                        )}
 
                         <DropdownMenuItem onClick={() => setShowSettings(true)}>
                             <Settings className="mr-2 h-4 w-4"/>

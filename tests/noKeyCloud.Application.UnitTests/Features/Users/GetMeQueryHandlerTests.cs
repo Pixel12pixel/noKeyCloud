@@ -23,7 +23,7 @@ public class GetMeQueryHandlerTests
         var userId = Guid.NewGuid();
         var query = new GetMeQuery(userId);
 
-        var user = new User(userId, "test@email.com", "testUser", new byte[] { 1 }, new byte[] { 2 });
+        var user = new User(userId, "test@email.com", "testUser", new byte[] { 1 }, new byte[] { 2 }, isAdmin: true);
 
         _userRepositoryMock
             .Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
@@ -37,6 +37,7 @@ public class GetMeQueryHandlerTests
         Assert.Equal("testUser", result.Value.Username);
         Assert.Equal("test@email.com", result.Value.Email);
         Assert.Equal(FolderIdHelper.GenerateRootFolderId(userId).ToString(), result.Value.RootFolderId);
+        Assert.True(result.Value.IsAdmin);
     }
 
     [Fact]
