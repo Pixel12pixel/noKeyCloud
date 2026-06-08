@@ -46,8 +46,8 @@ public class LoginVerifyTests
         var sessionId = Guid.NewGuid();
 
         _sessionStoreMock
-            .Setup(x => x.GetSession(sessionId))
-            .Returns((SrpSession?)null);
+            .Setup(x => x.GetSessionAsync(sessionId))
+            .ReturnsAsync((SrpSession?)null);
 
         var command = new LoginVerifyCommand(sessionId.ToString(), "1234567890");
 
@@ -97,16 +97,16 @@ public class LoginVerifyTests
         _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
         
         _sessionStoreMock
-            .Setup(x => x.GetSession(sessionId))
-            .Returns(session);
+            .Setup(x => x.GetSessionAsync(sessionId))
+            .ReturnsAsync(session);
 
         _sessionStoreMock
-            .Setup(x => x.GetUserId(sessionId))
-            .Returns(testUserId);
+            .Setup(x => x.GetUserIdAsync(sessionId))
+            .ReturnsAsync(testUserId);
 
         _sessionStoreMock
-            .Setup(x => x.DeleteSession(sessionId))
-            .Returns(true);
+            .Setup(x => x.DeleteSessionAsync(sessionId))
+            .ReturnsAsync(true);
 
         var command = new LoginVerifyCommand(
             sessionId.ToString(),
@@ -145,8 +145,8 @@ public class LoginVerifyTests
         };
 
         _sessionStoreMock
-            .Setup(x => x.GetSession(sessionId))
-            .Returns(session);
+            .Setup(x => x.GetSessionAsync(sessionId))
+            .ReturnsAsync(session);
 
         var fakeM1 = Convert.ToBase64String(new byte[] { 9, 9, 9 });
 

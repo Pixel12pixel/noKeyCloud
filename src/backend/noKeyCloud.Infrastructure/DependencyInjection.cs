@@ -5,6 +5,7 @@ using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Application.Abstractions.Services;
 using noKeyCloud.Infrastructure.Repositories;
 using noKeyCloud.Infrastructure.Services;
+using StackExchange.Redis;
 using Npgsql;
 
 namespace noKeyCloud.Infrastructure;
@@ -19,10 +20,22 @@ public static class DependencyInjection
     {
 
         // Register infrastructure services and repositories
+        
+        var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_HOST");
+        if (string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            throw new InvalidOperationException(
+                "Required environment variable 'REDIS_HOST' is missing.");
+        }
+        
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+        });
+        
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
 
-        services.AddDistributedMemoryCache();
-
-        services.AddSingleton<ISrpSessionStore, InMemorySrpSessionStore>();
+        services.AddSingleton<ISrpSessionStore, SrpSessionStoreProvider>();
 
         services.AddScoped<IFolderRepository, FolderRepository>();
 
@@ -32,14 +45,16 @@ public static class DependencyInjection
 
         services.AddScoped<IFileRepository, FileRepository>();
 
-        services.AddScoped<IRefreshTokenProvider, CachedRefreshTokenProvider>();
-
+        services.AddScoped<IRefreshTokenProvider, RefreshTokenProvider>();
+        
+        
 
         var postgreUrl = Environment.GetEnvironmentVariable("DB_HOST");
         if (string.IsNullOrWhiteSpace(postgreUrl))
         {
             throw new InvalidOperationException("Required environment variable 'DB_HOST' is missing or empty. Configure 'DB_HOST' with the PostgreSQL connection URL before starting the application.");
         }
+        
 
         var uri = new Uri(postgreUrl);
         var userInfo = uri.UserInfo.Split(':');

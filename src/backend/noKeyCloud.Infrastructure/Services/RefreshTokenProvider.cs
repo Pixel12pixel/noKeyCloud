@@ -4,7 +4,7 @@ using noKeyCloud.Application.Abstractions.Services;
 
 namespace noKeyCloud.Infrastructure.Services;
 
-public class CachedRefreshTokenProvider(IDistributedCache cache) : IRefreshTokenProvider
+public class RefreshTokenProvider(IDistributedCache cache) : IRefreshTokenProvider
 {
     public string GenerateRefreshToken()
     {

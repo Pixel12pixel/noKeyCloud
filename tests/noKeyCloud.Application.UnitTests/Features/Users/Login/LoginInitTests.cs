@@ -67,7 +67,7 @@ public class LoginInitTests
         Assert.NotEmpty(result.Value.B);
         
         _sessionStoreMock.Verify(store => 
-            store.SaveSession(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<SrpSession>()), 
+            store.SaveSessionAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<SrpSession>()), 
             Times.Once);
     }
 }
