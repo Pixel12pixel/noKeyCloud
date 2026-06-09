@@ -9,7 +9,8 @@ import {
     Image as ImageIcon,
     Music,
     Video,
-    Folder
+    Folder,
+    Download
 } from "lucide-react";
 import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
@@ -21,6 +22,13 @@ import {
 } from "@/shared/ui/table";
 import { format } from "date-fns";
 import { setGuest } from "@/entities/session/model/authStore";
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuTrigger,
+} from "@/shared/ui/context-menu";
+import { toast } from "sonner";
 
 async function decryptName(encryptedBase64: string): Promise<string> {
     try {
@@ -243,6 +251,45 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
         );
     };
 
+    const handleDownload = async (fileId: string, fileName: string) => {
+        const loadingToast = toast.loading(`Downloading ${fileName}...`);
+
+        try {
+            const res = await fetch(`${backendBaseUrl}/api/File/${fileId}`, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) throw new Error("Failed to download file.");
+
+            const data = await res.json();
+
+            const byteCharacters = atob(data.fileContent);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+
+            const blob = new Blob([byteArray], { type: data.mimeType || "application/octet-stream" });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            toast.success("Download complete", { id: loadingToast });
+        } catch (error) {
+            console.error("Download error:", error);
+            toast.error("Failed to download file", { id: loadingToast });
+        }
+    };
+
     return (
         <div>
             <div className="flex items-center gap-2 mb-4 bg-muted/30 p-2 rounded-md">
@@ -254,7 +301,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                     <ArrowLeft className="h-4 w-4"/>
                 </Button>
 
-                <div className="h-4 w-[1px] bg-border mx-2"/>
+                <div className="h-4 w-px bg-border mx-2"/>
 
                 <div className="flex items-center flex-wrap gap-1 text-sm font-medium">
                     {breadcrumbHistory.map((crumb, idx) => (
@@ -277,10 +324,10 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <SortableHeader label="Name" sortKey="name" className="w-[100%]"/>
-                            <SortableHeader label="Modified" sortKey="updatedAt" className="min-w-[150px] w-[150px]"/>
+                            <SortableHeader label="Name" sortKey="name" className="w-full"/>
+                            <SortableHeader label="Modified" sortKey="updatedAt" className="min-w-37.5 w-37.5"/>
                             <SortableHeader label="Size" sortKey="size"
-                                            className="min-w-[100px] w-[100px] whitespace-nowrap text-right"/>
+                                            className="min-w-25 w-25 whitespace-nowrap text-right"/>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -292,7 +339,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                             >
                                 <TableCell className="font-medium flex items-center gap-3">
                                     <Folder className="h-5 w-5 text-blue-500 fill-blue-500/20"/>
-                                    <span className="truncate max-w-[400px]"
+                                    <span className="truncate max-w-100"
                                           title={folder.decryptedName}>{folder.decryptedName}</span>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground whitespace-nowrap">
@@ -303,19 +350,34 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                         ))}
 
                         {sortedFiles.map((file) => (
-                            <TableRow key={file.filesId} className="hover:bg-muted/50">
-                                <TableCell className="font-medium flex items-center gap-3">
-                                    {getFileIcon(file.decryptedName)}
-                                    <span className="truncate max-w-[400px]"
-                                          title={file.decryptedName}>{file.decryptedName}</span>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground whitespace-nowrap">
-                                    {format(new Date(file.updatedAt), "dd-MM-yyyy HH:mm")}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground whitespace-nowrap text-right">
-                                    {formatBytes(file.sizeBytes)}
-                                </TableCell>
-                            </TableRow>
+                            <ContextMenu key={file.filesId}>
+                                <ContextMenuTrigger
+                                    render={
+                                        <TableRow
+                                            className="hover:bg-muted/50 cursor-context-menu"
+                                            style={{ display: "table-row" }}
+                                        />
+                                    }
+                                >
+                                    <TableCell className="font-medium flex items-center gap-3">
+                                        {getFileIcon(file.decryptedName)}
+                                        <span className="truncate max-w-100"
+                                              title={file.decryptedName}>{file.decryptedName}</span>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                                        {format(new Date(file.updatedAt), "dd-MM-yyyy HH:mm")}
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground whitespace-nowrap text-right">
+                                        {formatBytes(file.sizeBytes)}
+                                    </TableCell>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent className="w-48">
+                                    <ContextMenuItem onClick={() => handleDownload(file.filesId, file.decryptedName)}>
+                                        <Download className="mr-2 h-2 w-2" />
+                                        Download
+                                    </ContextMenuItem>
+                                </ContextMenuContent>
+                            </ContextMenu>
                         ))}
 
                         {sortedFolders.length === 0 && sortedFiles.length === 0 && (
