@@ -1,7 +1,7 @@
 import {useEffect} from "react";
-import {RegisterForm} from "@/widgets/register-form/ui/RegisterForm";
+import {RegisterForm} from "@/widgets/register-form";
 import {type ActionFunctionArgs, redirect, useActionData, useNavigation} from "react-router-dom";
-import {generateSrpVerifier} from "@/shared/security/srp-native.ts";
+import {generateSrpVerifier} from "@/shared/security";
 import {backendBaseUrl} from "@/shared/config";
 
 export async function registerAction({request}: ActionFunctionArgs) {
@@ -51,8 +51,9 @@ export async function registerAction({request}: ActionFunctionArgs) {
 
 
         return redirect(`/login`);
-    } catch (error: any) {
-        return {error: {errors: {body: [error.message || "Failed to create account"]}}};
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to create account";
+        return {error: {errors: {body: [errorMessage]}}};
     }
 }
 

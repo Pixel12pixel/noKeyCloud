@@ -1,4 +1,4 @@
-import { backendBaseUrl } from '@/shared/config/backend';
+import { backendBaseUrl } from '@/shared/config';
 
 export async function logoutUserApi(): Promise<void> {
     const response = await fetch(`${backendBaseUrl}/api/Authenticate/logout`, {

@@ -15,7 +15,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/shared/ui/tabs";
-import {useAuth} from "@/entities/session/model/useAuth";
+import {useAuth} from "@/entities/session";
 
 interface SettingsDialogProps {
     open: boolean;

@@ -1,4 +1,4 @@
-import {fetchCurrentUser, type UserProfileResponse} from "@/shared/api/user";
+import {fetchCurrentUser, type UserProfileResponse} from "@/shared/api";
 
 type AuthStatus = "loading" | "authenticated" | "guest";
 

@@ -1,10 +1,14 @@
-import { ThemeToggle } from "@/features/theme-switcher/ui/ThemeToggle";
+import { ThemeToggle } from "@/features/theme-switcher";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/shared/ui/button";
-import { UserProfileMenu } from "@/features/user-profile-menu/ui/UserProfileMenu";
-import { useAuth } from "@/entities/session/model/useAuth";
+import { useAuth } from "@/entities/session";
+import type {ReactNode} from "react";
 
-export function Header() {
+interface HeaderProps {
+    profileMenuSlot?: ReactNode;
+}
+
+export function Header({ profileMenuSlot }: HeaderProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const auth = useAuth();
@@ -22,7 +26,7 @@ export function Header() {
                 {auth.status === "loading" ? (
                     <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
                 ) : auth.status === "authenticated" ? (
-                    <UserProfileMenu />
+                    profileMenuSlot
                 ) : isLoginPage ? null : (
                     <Button onClick={() => navigate("/login")}>Log in</Button>
                 )}

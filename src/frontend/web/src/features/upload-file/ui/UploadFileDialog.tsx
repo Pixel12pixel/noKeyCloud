@@ -12,7 +12,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/shared/ui/dialog";
-import { cn, formatBytes } from "@/shared/lib/utils";
+import { cn, formatBytes } from "@/shared/lib";
 
 interface UploadFileDialogProps {
     parentId: string;

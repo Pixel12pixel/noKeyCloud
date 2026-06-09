@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { backendBaseUrl } from "@/shared/config";
 
+interface SystemSetupResponse {
+    needsSetup: boolean;
+}
+
 export function useSystemSetup() {
     const [needsSetup, setNeedsSetup] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +14,7 @@ export function useSystemSetup() {
             try {
                 const res = await fetch(`${backendBaseUrl}/api/System/setup-status`);
                 if (res.ok) {
-                    const data = await res.json();
+                    const data = (await res.json()) as SystemSetupResponse;
                     setNeedsSetup(data.needsSetup);
                 } else {
                     console.error("Backend returned an error:", await res.text());

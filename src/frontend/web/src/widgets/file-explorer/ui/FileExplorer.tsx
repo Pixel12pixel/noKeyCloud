@@ -16,12 +16,12 @@ import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {backendBaseUrl} from "@/shared/config";
 import {Button} from "@/shared/ui/button.tsx";
-import {cn, formatBytes} from "@/shared/lib/utils.ts";
+import {cn, formatBytes} from "@/shared/lib";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/shared/ui/table";
 import { format } from "date-fns";
-import { setGuest } from "@/entities/session/model/authStore";
+import { setGuest } from "@/entities/session";
 import {
     ContextMenu,
     ContextMenuContent,
@@ -29,6 +29,7 @@ import {
     ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
 import { toast } from "sonner";
+import type { FileResponse, FolderResponse, ListContentResponse } from "@/entities/folder";
 
 async function decryptName(encryptedBase64: string): Promise<string> {
     try {
@@ -89,9 +90,17 @@ interface FileExplorerProps {
     rootFolderId: string;
 }
 
+interface UIFile extends FileResponse {
+    decryptedName: string;
+}
+
+interface UIFolder extends FolderResponse {
+    decryptedName: string;
+}
+
 export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
     const navigate = useNavigate();
-    const [data, setData] = useState<{ folders: any[], files: any[] } | null>(null);
+    const [data, setData] = useState<{ folders: UIFolder[], files: UIFile[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({
         key: "name",
@@ -142,17 +151,21 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                 }
 
                 if (!res.ok) throw new Error("Failed to load content.");
-                const json = await res.json();
+                const json = (await res.json()) as ListContentResponse;
 
-                const foldersWithNames = await Promise.all(json.folders.map(async (f: any) => ({
-                    ...f,
-                    decryptedName: await decryptName(f.nameEncrypted),
-                })));
+                const foldersWithNames: UIFolder[] = await Promise.all(
+                    json.folders.map(async (f) => ({
+                        ...f,
+                        decryptedName: await decryptName(f.nameEncrypted),
+                    }))
+                );
 
-                const filesWithNames = await Promise.all(json.files.map(async (f: any) => ({
-                    ...f,
-                    decryptedName: await decryptName(f.fileNameEncrypted),
-                })));
+                const filesWithNames: UIFile[] = await Promise.all(
+                    json.files.map(async (f) => ({
+                        ...f,
+                        decryptedName: await decryptName(f.fileNameEncrypted),
+                    }))
+                );
 
                 setData({folders: foldersWithNames, files: filesWithNames});
             } catch (error) {
@@ -206,15 +219,15 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
     if (isLoading) return <div className="p-8 text-center text-slate-500">Decrypting and loading files...</div>;
     if (!data) return null;
 
-    const sortItems = (items: any[]) => {
+    const sortItems = <T extends UIFile | UIFolder>(items: T[]): T[] => {
         return [...items].sort((a, b) => {
             let valA, valB;
             if (sortConfig.key === "name") {
                 valA = a.decryptedName.toLowerCase();
                 valB = b.decryptedName.toLowerCase();
             } else if (sortConfig.key === "size") {
-                valA = a.sizeBytes || 0;
-                valB = b.sizeBytes || 0;
+                valA = 'sizeBytes' in a ? a.sizeBytes : 0;
+                valB = 'sizeBytes' in b ? b.sizeBytes : 0;
             } else {
                 valA = new Date(a.updatedAt).getTime();
                 valB = new Date(b.updatedAt).getTime();

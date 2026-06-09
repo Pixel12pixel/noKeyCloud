@@ -1,0 +1,1 @@
+export {useSystemSetup} from './model/useSystemSetup';

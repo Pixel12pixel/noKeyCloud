@@ -1,12 +1,24 @@
 import { backendBaseUrl } from '@/shared/config';
 import {
     N, g, modPow, bytesToBigInt, bigIntToBytes, computeX,
-    sha256, pad, bytesToBase64, base64ToBytes
-} from '@/shared/security/srp-native.ts';
+    sha256, pad
+} from './srp-native';
+import {bytesToBase64, base64ToBytes} from '@/shared/lib';
+
+export interface LoginInitResponse {
+    salt: string;
+    b: string;
+    sessionId: string;
+}
+
+export interface LoginVerifyResponse {
+    m2: string;
+    rootFolderId: string;
+}
 
 export const loginWithSRP = async (username: string, password: string) => {
     const aBytes = new Uint8Array(32);
-    window.crypto.getRandomValues(aBytes);
+    crypto.getRandomValues(aBytes);
     const a = bytesToBigInt(aBytes);
     const A = modPow(g, a, N);
 
@@ -20,7 +32,7 @@ export const loginWithSRP = async (username: string, password: string) => {
 
     if (!initRes.ok) throw new Error('Invalid credentials');
 
-    const { salt, b, sessionId } = await initRes.json();
+    const { salt, b, sessionId } = (await initRes.json()) as LoginInitResponse;
 
     const sBytes = base64ToBytes(salt);
     const bBytes = base64ToBytes(b);
@@ -76,7 +88,7 @@ export const loginWithSRP = async (username: string, password: string) => {
 
     if (!verifyRes.ok) throw new Error('Invalid credentials');
 
-    const authData = await verifyRes.json();
+    const authData = (await verifyRes.json()) as LoginVerifyResponse;
 
     // M2 = H(A, M1, K)
     const expectedM2 = await sha256(aBytesPad, M1, K);

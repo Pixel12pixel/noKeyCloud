@@ -12,7 +12,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { generateSrpVerifier } from "@/shared/security/srp-native";
+import { generateSrpVerifier } from "@/shared/security";
 import { backendBaseUrl } from "@/shared/config";
 
 interface AdminSetupDialogProps {

@@ -1,9 +1,8 @@
 import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
-import { loginWithSRP } from "../api/login";
-import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
+import { loginWithSRP } from "@/shared/security";
+import { LoginForm } from "@/widgets/login-form";
 import { useEffect } from "react";
-import { refreshAuth } from "@/entities/session/model/authStore";
-import { useAuth } from "@/entities/session/model/useAuth";
+import { refreshAuth, useAuth } from "@/entities/session";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -20,8 +19,9 @@ export async function loginAction({ request }: ActionFunctionArgs) {
         void refreshAuth();
 
         return redirect(`/folder/${authData.rootFolderId}`);
-    } catch (error: any) {
-        return { error: { errors: { body: [error.message || "Failed to sign in. Please verify your credentials."] } } };
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to sign in. Please verify your credentials.";
+        return { error: { errors: { body: [errorMessage] } } };
     }
 }
 

@@ -1,4 +1,4 @@
-import { backendBaseUrl } from "@/shared/config/backend";
+import { backendBaseUrl } from "@/shared/config";
 
 export interface UserProfileResponse {
     userId: string;
