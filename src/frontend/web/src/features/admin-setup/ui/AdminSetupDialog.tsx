@@ -12,8 +12,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { generateSrpVerifier } from "@/shared/security";
+import { prepareRegistration } from "@/shared/security";
 import { backendBaseUrl } from "@/shared/config";
+import { BackupCodesDialog } from "@/features/backup-codes";
 
 interface AdminSetupDialogProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
@@ -44,7 +46,7 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
         try {
             setIsSubmitting(true);
 
-            const { saltBase64, verifierBase64 } = await generateSrpVerifier(username, password);
+            const cryptoPayload = await prepareRegistration(username, password);
 
             const response = await fetch(`${backendBaseUrl}/api/Authenticate/register`, {
                 method: "POST",
@@ -52,8 +54,11 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
                 body: JSON.stringify({
                     email: email,
                     username: username,
-                    salt: saltBase64,
-                    verifier: verifierBase64,
+                    salt: cryptoPayload.srpSaltBase64,
+                    verifier: cryptoPayload.srpVerifierBase64,
+                    encryptedMasterKey: cryptoPayload.encryptedMasterKeyBase64,
+                    keySalt: cryptoPayload.keySaltBase64,
+                    recoveryEncryptedMasterKey: cryptoPayload.recoveryEncryptedMasterKeyBase64,
                     inviteCode: null
                 })
             });
@@ -65,7 +70,7 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
             }
 
             toast.success("Admin account created successfully.");
-            onComplete();
+            setRecoveryCode(cryptoPayload.recoveryPasswordPlaintext);
 
         } catch {
             setError("Failed to set up admin account. Please try again.");
@@ -73,6 +78,20 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
             setIsSubmitting(false);
         }
     };
+
+    if (recoveryCode) {
+        return (
+            <BackupCodesDialog
+                open={true}
+                codes={[recoveryCode]}
+                username={username}
+                onAcknowledge={() => {
+                    setRecoveryCode(null);
+                    onComplete();
+                }}
+            />
+        );
+    }
 
     return (
         <AlertDialog open={isOpen}>
