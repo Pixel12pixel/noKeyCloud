@@ -14,6 +14,8 @@ export interface LoginInitResponse {
 export interface LoginVerifyResponse {
     m2: string;
     rootFolderId: string;
+    encryptedMasterKey: string;
+    keySalt: string;
 }
 
 export const loginWithSRP = async (username: string, password: string) => {

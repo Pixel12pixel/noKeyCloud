@@ -1,8 +1,9 @@
 import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
-import { loginWithSRP } from "@/shared/security";
+import {importKey, loginWithSRP, deriveKey, decryptBytes} from "@/shared/security";
 import { LoginForm } from "@/widgets/login-form";
 import { useEffect } from "react";
-import { refreshAuth, useAuth } from "@/entities/session";
+import { refreshAuth, useAuth, setMasterKey } from "@/entities/session";
+import {base64ToBytes} from "@/shared/lib";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -16,7 +17,18 @@ export async function loginAction({ request }: ActionFunctionArgs) {
     try {
         const authData = await loginWithSRP(identifier, password);
 
-        void refreshAuth();
+        const keySaltBytes = base64ToBytes(authData.keySalt);
+        const encryptedMasterKeyBytes = base64ToBytes(authData.encryptedMasterKey);
+
+        const kek = await deriveKey(password, keySaltBytes);
+
+        const rawMkBytes = await decryptBytes(kek, encryptedMasterKeyBytes);
+
+        const masterKey = await importKey(rawMkBytes);
+
+        setMasterKey(masterKey);
+
+        await refreshAuth();
 
         return redirect(`/folder/${authData.rootFolderId}`);
     } catch (error: unknown) {
