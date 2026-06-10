@@ -32,6 +32,10 @@ public class AuthenticateController : ControllerBase
             request.Email,
             request.Salt,
             request.Verifier,
+            request.EncryptedMasterKey,
+            request.KeySalt,
+            request.RecoveryEncryptedMasterKey,
+            request.RootFolderKey,
             request.RegisterInviteCode);
         
         var result = await _mediator.Send(command);

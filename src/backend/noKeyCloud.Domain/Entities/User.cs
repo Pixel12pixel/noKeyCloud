@@ -24,6 +24,10 @@ public class User
     
     public byte[] Verifier { get; private set; }
     
+    public byte[] EncryptedMasterKey { get; private set; }
+    
+    public byte[] KeySalt { get; private set; }
+    
     public bool IsAdmin { get; private set; }
     
     //Navigation
@@ -54,7 +58,7 @@ public class User
     
     //Validation
 
-    public User(Guid id, string email, string username, byte[] salt, byte[] verifier, bool isAdmin = false)
+    public User(Guid id, string email, string username, byte[] salt, byte[] verifier, byte[] encryptedMasterKey, byte[] keySalt, bool isAdmin = false)
     {
         Id = id;
         Email = email;
@@ -62,6 +66,8 @@ public class User
         IsActive = true;
         Salt = salt;
         Verifier = verifier;
+        EncryptedMasterKey = encryptedMasterKey;
+        KeySalt = keySalt;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;
         IsAdmin = isAdmin;

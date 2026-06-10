@@ -23,8 +23,16 @@ public class GetMeQueryHandlerTests
         var userId = Guid.NewGuid();
         var query = new GetMeQuery(userId);
 
-        var user = new User(userId, "test@email.com", "testUser", new byte[] { 1 }, new byte[] { 2 }, isAdmin: true);
-
+        var user = new User(
+            userId,
+            "test@email.com",
+            "testUser",
+            new byte[] { 1 },
+            new byte[] { 2 },
+            new byte[] { 3 },
+            new byte[] { 5 },
+            isAdmin: true);
+        
         _userRepositoryMock
             .Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);

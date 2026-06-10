@@ -4,10 +4,11 @@ using noKeyCloud.Application.Abstractions.Repositories;
 using noKeyCloud.Contracts.Common;
 using noKeyCloud.Domain.Entities;
 using noKeyCloud.Application.Features.Folders;
+using noKeyCloud.Domain.Enums;
 
 namespace noKeyCloud.Application.Features.Users.Register;
 
-public class RegisterUserHandler(IUserRepository userRepository, IFolderRepository folderRepository, IRegisterInviteRepository registerInviteRepository)
+public class RegisterUserHandler(IUserRepository userRepository, IFolderRepository folderRepository, IRegisterInviteRepository registerInviteRepository, IRecoveryMethodRepository recoveryMethodRepository)
     : IRequestHandler<RegisterUserCommand, Result>
 {
     public async Task<Result> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
@@ -29,7 +30,17 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
         
         try
         {
-            var user = new User(Guid.NewGuid(), request.Email, request.Username, request.Salt, request.Verifier, isAdmin: isFirstUser);
+            var userId = Guid.NewGuid();
+            
+            var user = new User(
+                userId,
+                request.Email, 
+                request.Username, 
+                request.Salt, 
+                request.Verifier, 
+                request.EncryptedMasterKey, 
+                request.KeySalt,
+                isAdmin: isFirstUser);
 
 
             if (user is null)
@@ -38,8 +49,7 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
             }
 
             var temporaryNameBytes = Encoding.UTF8.GetBytes("home-" + user.Username);
-
-            var emptyKeyBytes = Array.Empty<byte>();
+            
             var now = DateTime.UtcNow;
             
             var rootFolderId = FolderIdHelper.GenerateRootFolderId(user.Id);
@@ -47,16 +57,23 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
             var rootFolder = new Folder(
               id: rootFolderId,
               encryptedName: temporaryNameBytes,
-              encryptedKey: emptyKeyBytes,
+              encryptedKey: request.RootFolderKey,
               createdAt: now,
               updatedAt: now,
               parentFolderId: null,
               userId: user.Id
             );
             
+            var recoveryMethod = new RecoveryMethod(
+                Guid.NewGuid(),
+                RecoveryMethodType.Secret_Recovery,
+                request.RecoveryEncryptedMasterKey,
+                userId);
+            
             // TODO: wrap these two calls in a database transaction so that if the folder creation fails, the user isn't left in a broken state without a home folder.
             await userRepository.CreateUser(user);
             await folderRepository.AddFolder(rootFolder, cancellationToken);
+            await recoveryMethodRepository.CreateRecoveryMethod(recoveryMethod, cancellationToken);
 
             if (validInvite != null)
             {

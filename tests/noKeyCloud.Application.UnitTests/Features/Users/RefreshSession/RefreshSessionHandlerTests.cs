@@ -34,7 +34,7 @@ public class RefreshSessionHandlerTests
             .Returns("new-refresh-token");
             
         _userRepositoryMock.Setup(x => x.GetUserByUserId(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new User(userId, "test@test.com", "test", new byte[0], new byte[0], false));
+            .ReturnsAsync(new User(userId, "test@test.com", "test", new byte[0], new byte[0], new byte[0], new byte[0], false));
 
         _jwtServiceMock.Setup(x => x.JwtTokenService(userId, false))
             .ReturnsAsync("new-jwt-token");
