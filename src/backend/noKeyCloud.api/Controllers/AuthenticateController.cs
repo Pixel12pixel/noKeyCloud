@@ -1,6 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.LoginInit;
@@ -10,6 +8,8 @@ using noKeyCloud.Application.Features.Users.RefreshSession;
 using noKeyCloud.Application.Features.Users.Register;
 using noKeyCloud.Application.Features.Users.RemoveUser;
 using noKeyCloud.Contracts.Authenticate;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -33,7 +33,7 @@ public class AuthenticateController : ControllerBase
             request.Salt,
             request.Verifier,
             request.RegisterInviteCode);
-        
+
         var result = await _mediator.Send(command);
         if (result.IsSuccess)
         {
@@ -79,16 +79,16 @@ public class AuthenticateController : ControllerBase
                 Path = "/",
                 Expires = DateTime.UtcNow.AddMinutes(15)
             });
-            
+
             Response.Cookies.Append("refresh_token", result.Value!.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, 
+                Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Path = "/api/Authenticate/refresh",
                 Expires = DateTime.UtcNow.AddHours(24)
             });
-            
+
             return Ok(result.Value!.ResponsePayload);
         }
         else if (result.Error == "Invalid credentials" || result.Error == "Session not found." || result.Error == "SRP verification failed")
@@ -106,15 +106,15 @@ public class AuthenticateController : ControllerBase
         {
             return Unauthorized("Refresh token is missing.");
         }
-        
-        var command = new RefreshSessionCommand(request.UserId, refreshTokenCookie);
+
+        var command = new RefreshSessionCommand(refreshTokenCookie);
         var result = await _mediator.Send(command);
 
         if (!result.IsSuccess)
         {
             return Unauthorized(result.Error);
         }
-        
+
         Response.Cookies.Append("access_token", result.Value!.JwtToken, new CookieOptions
         {
             HttpOnly = true,
@@ -123,7 +123,7 @@ public class AuthenticateController : ControllerBase
             Path = "/",
             Expires = DateTime.UtcNow.AddMinutes(15)
         });
-        
+
         Response.Cookies.Append("refresh_token", result.Value!.RefreshToken, new CookieOptions
         {
             HttpOnly = true,
@@ -165,13 +165,13 @@ public class AuthenticateController : ControllerBase
         {
             return Unauthorized("User context is invalid.");
         }
-        
+
         Request.Cookies.TryGetValue("refresh_token", out var refreshTokenCookie);
 
         var command = new LogoutUserCommand(userId, refreshTokenCookie ?? "");
 
         var result = await _mediator.Send(command);
-        
+
         Response.Cookies.Delete("access_token", new CookieOptions { Path = "/" });
         Response.Cookies.Delete("refresh_token", new CookieOptions { Path = "/api/Authenticate/refresh" });
 
@@ -182,7 +182,7 @@ public class AuthenticateController : ControllerBase
 
         if (result.Error != null && result.Error.Contains("Token.NotFound"))
         {
-            return Ok(); 
+            return Ok();
         }
 
         return BadRequest(result.Error);
