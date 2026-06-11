@@ -9,6 +9,8 @@ using noKeyCloud.Application.Features.Folders.ListContent;
 using noKeyCloud.Domain.Entities;
 using Xunit;
 
+namespace noKeyCloud.Application.UnitTests.Features.Folders.ListContent;
+
 public class ListContentHandlerTests
 {
     [Fact]

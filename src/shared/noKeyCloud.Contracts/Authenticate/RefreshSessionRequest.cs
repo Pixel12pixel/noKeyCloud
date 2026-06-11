@@ -1,3 +1,3 @@
 ﻿namespace noKeyCloud.Contracts.Authenticate;
 
-public record RefreshSessionRequest(Guid UserId);
+public record RefreshSessionRequest();
