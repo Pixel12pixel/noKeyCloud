@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddSingleton<ISrpSessionStore, SrpSessionStoreProvider>();
 
         services.AddScoped<IFolderRepository, FolderRepository>();
+        
+        services.AddScoped<IRecoveryMethodRepository, RecoveryMethodRepository>();
 
         services.AddScoped<IUserRepository, UserRepository>();
 

@@ -100,7 +100,7 @@ public class LoginVerifyTests
         _folderRepositoryMock.Setup(repo => repo.GetUserHomeFolder(testUserId, default)).ReturnsAsync(mockFolder);
         
         _userRepositoryMock.Setup(x => x.GetUserByUserId(testUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new User(testUserId, "test@test.com", "test", new byte[0], new byte[0], true));
+            .ReturnsAsync(new User(testUserId, "test@test.com", "test", new byte[0], new byte[0],new byte[0],new byte[0], true));
         
         _sessionStoreMock
             .Setup(x => x.GetSessionAsync(sessionId))

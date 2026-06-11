@@ -33,7 +33,9 @@ public class CreateFileTests
             "test@email.com", 
             "testuser", 
             fakeSalt, 
-            fakeVerifier
+            fakeVerifier,
+            new byte[0],
+            new byte[0]
         );
 
         var fakeFolder = new Folder(
@@ -79,7 +81,9 @@ public class CreateFileTests
             "test@email.com", 
             "testuser", 
             fakeSalt, 
-            fakeVerifier
+            fakeVerifier,
+            new byte[0],
+            new byte[0]
         );
 
         var fakeFolder = new Folder(
@@ -124,7 +128,9 @@ public class CreateFileTests
             "test@email.com",
             "testuser",
             fakeSalt,
-            fakeVerifier
+            fakeVerifier,
+            new byte[0],
+            new byte[0]
         );
 
         var fakeFolder = new Folder(

@@ -51,7 +51,9 @@ public class RemoveUserTests
             "test@email.com", 
             "testuser", 
             fakeSalt, 
-            fakeVerifier
+            fakeVerifier,
+            new byte[0],
+            new byte[0]
         );
 
         var command = new RemoveUserCommand(userId);
