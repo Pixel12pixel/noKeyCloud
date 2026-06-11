@@ -1,0 +1,102 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "main"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: dev-env
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      #
+      # Backend
+      #
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore Backend
+        run: dotnet restore
+
+      - name: Build Backend
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test Backend
+        run: dotnet test --configuration Release --no-build
+
+      #
+      # Frontend
+      #
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Frontend Dependencies
+        working-directory: src/frontend/web
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: src/frontend/web
+        run: npm run build
+
+      #
+      # SSH
+      #
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+
+          echo "${{ secrets.HOST_KEY }}" > ~/.ssh/id_rsa
+
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh-keyscan -p ${{ secrets.HOST_PORT }} -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
+
+      #
+      # Sync files
+      #
+      - name: Upload Project
+        run: |
+          rsync -az --delete \
+            -e "ssh -p ${{ secrets.HOST_PORT }}" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            ./ \
+            ${{ secrets.HOST_USER }}@${{ secrets.HOST_IP }}:/opt/nokeycloud/
+
+      #
+      # Deploy
+      #
+      - name: Deploy Containers
+        run: |
+          ssh -p ${{ secrets.HOST_PORT }} \
+            ${{ secrets.HOST_USER }}@${{ secrets.HOST_IP }} << 'EOF'
+          
+            cd /opt/nokeycloud
+
+            docker compose pull
+
+            docker compose up -d --build
+
+            docker image prune -f
+          EOF
