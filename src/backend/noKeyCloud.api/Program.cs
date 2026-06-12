@@ -1,3 +1,4 @@
+using noKeyCloud.api.CustomMiddleware;
 using noKeyCloud.Application;
 using noKeyCloud.Infrastructure;
 using Scalar.AspNetCore;
@@ -11,12 +12,10 @@ public class Program
     /// </summary>
     public static void Main()
     {
-
-        // Load environment variables from .env file
         DotNetEnv.Env.Load();
 
         var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
-        
+
         if (string.IsNullOrWhiteSpace(frontendUrl))
         {
             throw new InvalidOperationException("CRITICAL ERROR: 'FRONTEND_URL' environment variable is missing. It is required for CORS and security.");
@@ -27,18 +26,30 @@ public class Program
             throw new InvalidOperationException($"CRITICAL ERROR: 'FRONTEND_URL' ({frontendUrl}) is malformed. It must be a valid absolute HTTP or HTTPS URL (e.g., http://localhost:5173)");
         }
 
-        // Create the WebApplication builder
         var builder = WebApplication.CreateBuilder();
-        
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("FrontendOrigin", policy =>
             {
-                policy.WithOrigins(frontendUrl.TrimEnd('/')) 
+                policy.WithOrigins(frontendUrl.TrimEnd('/'))
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+        });
+
+
+        builder.Services.AddHsts(options =>
+        {
+            options.Preload = true;
+            options.MaxAge = TimeSpan.FromDays(365);
+        });
+
+        builder.Services.AddHttpsRedirection(options =>
+        {
+            options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+            options.HttpsPort = 443;
         });
 
         builder.Services.AddControllers();
@@ -55,9 +66,8 @@ public class Program
 
 
 
-        // Build the application
         var app = builder.Build();
-        
+
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
@@ -69,9 +79,24 @@ public class Program
             app.MapOpenApi();
             app.MapScalarApiReference();
         }
+        else
+        {
+            app.UseHsts();
+        }
 
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Append("X-Xss-Protection", "1; mode=block");
+            context.Response.Headers.Append("X-Frame-Options", "DENY");
+            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+            await next(context);
+        });
+
+        app.UseContentSecurityPolicy();
         app.UseHttpsRedirection();
-        
+
         app.UseCors("FrontendOrigin");
 
         app.UseAuthentication();
@@ -80,7 +105,6 @@ public class Program
         app.MapControllers();
 
 
-        // Run the application
         app.Run();
     }
 }

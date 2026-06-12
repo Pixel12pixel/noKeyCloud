@@ -8,4 +8,8 @@ public record RegisterUserCommand(
     string Email,
     byte[] Salt,
     byte[] Verifier,
+    byte[] EncryptedMasterKey,
+    byte[] KeySalt,
+    byte[] RecoveryEncryptedMasterKey,
+    byte[] RootFolderKey,
     string? RegisterInviteCode) : IRequest<Result>;

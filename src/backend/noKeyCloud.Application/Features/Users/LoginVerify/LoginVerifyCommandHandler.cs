@@ -67,8 +67,9 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             if (!deleteSession) return Result<LoginVerifyResult>.Failure("Could not remove session");
             
             var responsePayload = new LoginVerifyResponse(
-                Convert.ToBase64String(serverM2),
-                rootFolder.Id.ToString()
+                serverM2,
+                user.EncryptedMasterKey,
+                user.KeySalt
             );
             
             var handlerResult = new LoginVerifyResult(

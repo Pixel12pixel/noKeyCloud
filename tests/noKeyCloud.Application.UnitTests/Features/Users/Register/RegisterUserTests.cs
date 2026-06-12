@@ -14,6 +14,7 @@ public class RegisterUserTests
         var repoMock = new Mock<IUserRepository>();
         var folderRepoMock = new Mock<IFolderRepository>();
         var inviteRepoMock = new Mock<IRegisterInviteRepository>();
+        var recoveryMethodRepoMock = new Mock<IRecoveryMethodRepository>();
 
         repoMock.Setup(x => x.HasAnyUsersAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -22,9 +23,21 @@ public class RegisterUserTests
         repoMock.Setup(x => x.CreateUser(It.IsAny<User>()))
             .Callback<User>(u => capturedUser = u)
             .Returns(Task.CompletedTask);
+        
+        recoveryMethodRepoMock.Setup(x => x.CreateRecoveryMethod(It.IsAny<RecoveryMethod>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
-        var handler = new RegisterUserHandler(repoMock.Object, folderRepoMock.Object, inviteRepoMock.Object);
-        var cmd = new RegisterUserCommand("mine", "minipaka", new byte[] { 75 }, new byte[] { 34 }, null);
+        var handler = new RegisterUserHandler(repoMock.Object, folderRepoMock.Object, inviteRepoMock.Object, recoveryMethodRepoMock.Object);
+        
+        var cmd = new RegisterUserCommand("mine",
+            "minipaka", new byte[] { 75 },
+            new byte[] { 34 },
+            new byte[] { 34 },
+            new byte[] { 34 },
+            new byte[] { 34 },
+            new byte[] { 34 },
+            null);
+        
 
         var result = await handler.Handle(cmd, CancellationToken.None);
         
@@ -39,6 +52,13 @@ public class RegisterUserTests
                     f.UserId == capturedUser.Id && 
                     f.ParentFolderId == null), 
                 It.IsAny<CancellationToken>()), 
+            Times.Once);
+        
+        recoveryMethodRepoMock.Verify(
+            x => x.CreateRecoveryMethod(
+                It.Is<RecoveryMethod>(r =>
+                    r.UserId == capturedUser.Id),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }
