@@ -48,7 +48,7 @@ public class RegisterUserHandler(IUserRepository userRepository, IFolderReposito
                 return Result.Failure("Failed to create user.");
             }
 
-            var temporaryNameBytes = Encoding.UTF8.GetBytes("home-" + user.Username);
+            var temporaryNameBytes = Array.Empty<byte>();
             
             var now = DateTime.UtcNow;
             

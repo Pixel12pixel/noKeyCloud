@@ -25,7 +25,8 @@ public class CreateFolderHandlerTests
         var userId = Guid.NewGuid();
         var command = new CreateFolderCommand(
             UserId: userId,
-            FolderName: "New Project",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: Guid.NewGuid()
         );
 
@@ -37,19 +38,18 @@ public class CreateFolderHandlerTests
 
         Assert.NotNull(result);
         Assert.NotEqual(Guid.Empty, result.Id);
-        Assert.Equal("New Project", result.Name);
 
         var inputBytes = Encoding.UTF8.GetBytes($"{userId}:root");
         var hashBytes = SHA256.HashData(inputBytes);
         var expectedGuidBytes = new byte[16];
         Array.Copy(hashBytes, expectedGuidBytes, 16);
-        var expectedRootFolderId = new Guid(expectedGuidBytes);
 
         _folderRepositoryMock.Verify(
             x => x.AddFolder(
                 It.Is<Folder>(f =>
                     f.UserId == command.UserId &&
-                    Encoding.UTF8.GetString(f.EncryptedName) == command.FolderName &&
+                    Enumerable.SequenceEqual(f.EncryptedName, command.EncryptedName) &&
+                    Enumerable.SequenceEqual(f.EncryptedKey, command.EncryptedKey) &&
                     f.ParentFolderId == command.ParentFolderId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -61,7 +61,8 @@ public class CreateFolderHandlerTests
         var parentId = Guid.NewGuid();
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
-            FolderName: "Sub Folder",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: parentId
         );
 
@@ -84,7 +85,8 @@ public class CreateFolderHandlerTests
     {
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
-            FolderName: "Valid Folder",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: Guid.Empty
         );
 
@@ -99,7 +101,8 @@ public class CreateFolderHandlerTests
     {
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
-            FolderName: "Failed Folder",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: Guid.NewGuid()
         );
 
@@ -122,7 +125,8 @@ public class CreateFolderHandlerTests
     {
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
-            FolderName: "Canceled Folder",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: Guid.NewGuid()
         );
 
@@ -143,7 +147,8 @@ public class CreateFolderHandlerTests
     {
         var command = new CreateFolderCommand(
             UserId: Guid.NewGuid(),
-            FolderName: "Another Root Folder Attempt",
+            EncryptedName: Encoding.UTF8.GetBytes("EncryptedFolderName"),
+            EncryptedKey: Encoding.UTF8.GetBytes("EncryptedKey"),
             ParentFolderId: null
         );
         

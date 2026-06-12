@@ -16,13 +16,10 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
             throw new Exception("ParentFolderId cannot be null.");
         }
 
-        var temporaryNameBytes = Encoding.UTF8.GetBytes(request.FolderName);
-
-        if (temporaryNameBytes.Length == 0)
+        if (request.EncryptedName is null || request.EncryptedName.Length == 0)
         {
-            throw new ArgumentException("Folder name cannot be empty.", nameof(request.FolderName));
+            throw new ArgumentException("Folder name cannot be empty.", nameof(request.EncryptedName));
         }
-        var emptyKeyBytes = Array.Empty<byte>();
 
         if (request.ParentFolderId.HasValue && request.ParentFolderId.Value == Guid.Empty)
         {
@@ -34,8 +31,8 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
         var now = DateTime.UtcNow;
         var folder = new Folder(
             id: Guid.NewGuid(),
-            encryptedName: temporaryNameBytes,
-            encryptedKey: emptyKeyBytes,
+            encryptedName: request.EncryptedName,
+            encryptedKey: request.EncryptedKey,
             createdAt: now,
             updatedAt: now,
             parentFolderId: parentFolderId,
@@ -45,9 +42,6 @@ public class CreateFolderHandler(IFolderRepository folderRepository)
 
         var createdFolder = await folderRepository.AddFolder(folder, cancellationToken);
 
-        // TODO: Temporarily convert the byte[] back to normal string name
-        var responseName = Encoding.UTF8.GetString(createdFolder.EncryptedName);
-
-        return new CreateFolderResponse(createdFolder.Id, responseName);
+        return new CreateFolderResponse(createdFolder.Id);
     }
 }

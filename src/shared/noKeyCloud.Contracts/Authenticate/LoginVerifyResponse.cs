@@ -3,8 +3,6 @@
 public record LoginVerifyResponse
 (
     byte[] M2,
-    string RootFolderId,
     byte[] EncryptedMasterKey,
-    byte[] KeySalt,
-    byte[] RootFolderKey
+    byte[] KeySalt
 );

@@ -7,6 +7,8 @@ using noKeyCloud.Application.Features.Folders.ListContent;
 using noKeyCloud.Contracts.Folders;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using noKeyCloud.Application.Features.Folders;
+using noKeyCloud.Application.Features.Folders.GetAncestry;
 
 
 namespace noKeyCloud.api.Controllers;
@@ -50,11 +52,33 @@ public class FolderController : ControllerBase
 
         var command = new CreateFolderCommand(
             userId,
-            request.Name,
+            request.EncryptedName,
+            request.EncryptedKey,
             request.ParentFolderId);
 
         var response = await _mediator.Send(command, cancellationToken);
 
         return Created($"/api/Folder/{response.Id}", response);
+    }
+    
+    [Authorize]
+    [HttpGet("GetAncestry")]
+    public async Task<ActionResult<GetAncestryResponse>> GetAncestry([FromQuery] GetAncestryRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Invalid token claims");
+        }
+
+        var query = new GetAncestryQuery(userId, request.FolderId);
+        var result = await _mediator.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return NotFound(result.Error);
     }
 }
