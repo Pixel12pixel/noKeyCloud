@@ -63,7 +63,7 @@ public class FolderController : ControllerBase
     
     [Authorize]
     [HttpGet("GetAncestry")]
-    public async Task<ActionResult<CreateFolderResponse>> GetAncestry([FromQuery] GetAncestryRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<GetAncestryResponse>> GetAncestry([FromQuery] GetAncestryRequest request, CancellationToken cancellationToken)
     {
         var userIdClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
