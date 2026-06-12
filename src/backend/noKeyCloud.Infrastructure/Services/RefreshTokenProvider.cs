@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 namespace noKeyCloud.Infrastructure.Services;
 
-public class RefreshTokenProvider(IDistributedCache cache, ICachedRefreshTokenProvider cachedRefreshTokenProvider) : IRefreshTokenProvider
+public class RefreshTokenProvider(IDistributedCache cache) : IRefreshTokenProvider
 {
     public string GenerateRefreshToken()
     {
@@ -41,8 +41,9 @@ public class RefreshTokenProvider(IDistributedCache cache, ICachedRefreshTokenPr
         {
             await cache.RemoveAsync($"TokenUser_{oldToken}", cancellationToken);
         }
-
-        await cachedRefreshTokenProvider.CachedRefreshTokenProviderAsync(userId, refreshToken, options, cancellationToken);
+        
+        await cache.SetStringAsync($"RefreshToken_{userId}", refreshToken, options, cancellationToken);
+        await cache.SetStringAsync($"TokenUser_{refreshToken}", userId.ToString(), options, cancellationToken);
     }
 
     public async Task InvalidateRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
