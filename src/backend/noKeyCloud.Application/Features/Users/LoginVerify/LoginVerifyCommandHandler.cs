@@ -68,10 +68,8 @@ namespace noKeyCloud.Application.Features.Users.LoginVerify;
             
             var responsePayload = new LoginVerifyResponse(
                 serverM2,
-                rootFolder.Id.ToString(),
                 user.EncryptedMasterKey,
-                user.KeySalt,
-                rootFolder.EncryptedKey
+                user.KeySalt
             );
             
             var handlerResult = new LoginVerifyResult(

@@ -5,5 +5,6 @@ namespace noKeyCloud.Application.Features.Folders.CreateFolder;
 
 public record CreateFolderCommand(
     Guid UserId,
-    string FolderName,
+    byte[] EncryptedName,
+    byte[] EncryptedKey,
     Guid? ParentFolderId) : IRequest<CreateFolderResponse>;

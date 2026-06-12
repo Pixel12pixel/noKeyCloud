@@ -126,7 +126,6 @@ public class LoginVerifyTests
         Assert.NotNull(result.Value);
         Assert.Equal("dummy-refresh-token", result.Value!.RefreshToken);
         Assert.NotNull(result.Value.JwtToken);
-        Assert.Equal(testRootFolderId.ToString(), result.Value!.ResponsePayload.RootFolderId);
 
         _refreshTokenProviderMock.Verify(x => x.StoreRefreshTokenAsync(
             It.IsAny<Guid>(),

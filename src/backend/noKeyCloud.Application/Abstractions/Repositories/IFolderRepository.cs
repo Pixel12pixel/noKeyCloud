@@ -16,4 +16,6 @@ public interface IFolderRepository
     Task<Folder> AddFolder(Folder folder, CancellationToken cancellationToken = default);
 
     Task<Folder> GetUserHomeFolder(Guid UserId, CancellationToken cancellationToken);
+    
+    Task<Folder?> GetByIdAndUserIdAsync(Guid folderId, Guid userId, CancellationToken cancellationToken);
 }
