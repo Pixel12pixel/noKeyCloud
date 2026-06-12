@@ -2,7 +2,7 @@ import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNav
 import {importKey, loginWithSRP, deriveKey, decryptBytes} from "@/shared/security";
 import { LoginForm } from "@/widgets/login-form";
 import { useEffect } from "react";
-import { refreshAuth, useAuth, setMasterKey } from "@/entities/session";
+import {refreshAuth, useAuth, setMasterKey, getAuthState} from "@/entities/session";
 import {base64ToBytes} from "@/shared/lib";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
@@ -30,7 +30,13 @@ export async function loginAction({ request }: ActionFunctionArgs) {
 
         await refreshAuth();
 
-        return redirect(`/folder/${authData.rootFolderId}`);
+        const { rootFolderId } = getAuthState();
+
+        if (!rootFolderId) {
+            throw new Error("Failed to resolve user root directory.");
+        }
+
+        return redirect(`/folder/${rootFolderId}`);
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Failed to sign in. Please verify your credentials.";
         return { error: { errors: { body: [errorMessage] } } };

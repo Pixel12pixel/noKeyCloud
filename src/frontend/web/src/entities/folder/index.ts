@@ -1,1 +1,2 @@
-export type {FileResponse, FolderResponse, ListContentResponse} from './model/types';
+export type {FileResponse, FolderResponse, ListContentResponse, FolderAncestryResponse} from './model/types';
+export { vaultKeys } from './model/vaultStore';

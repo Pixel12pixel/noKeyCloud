@@ -44,6 +44,7 @@ export async function registerAction({request}: ActionFunctionArgs) {
                 encryptedMasterKey: cryptoPayload.encryptedMasterKeyBase64,
                 keySalt: cryptoPayload.keySaltBase64,
                 recoveryEncryptedMasterKey: cryptoPayload.recoveryEncryptedMasterKeyBase64,
+                rootFolderKey: cryptoPayload.rootFolderEncryptedKeyBase64,
                 registerInviteCode: registerInviteCode
             })
         });

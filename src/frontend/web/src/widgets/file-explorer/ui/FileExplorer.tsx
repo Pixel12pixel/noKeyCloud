@@ -16,7 +16,7 @@ import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {backendBaseUrl} from "@/shared/config";
 import {Button} from "@/shared/ui/button.tsx";
-import {cn, formatBytes} from "@/shared/lib";
+import {base64ToBytes, cn, formatBytes} from "@/shared/lib";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/shared/ui/table";
@@ -29,18 +29,14 @@ import {
     ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
 import { toast } from "sonner";
-import type { FileResponse, FolderResponse, ListContentResponse } from "@/entities/folder";
-
-async function decryptName(encryptedBase64: string): Promise<string> {
-    try {
-        // TODO: Replace with actual name decryption when encryption implemented
-        const binString = atob(encryptedBase64);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder().decode(bytes);
-    } catch {
-        return "Unknown File";
-    }
-}
+import {
+    type FileResponse,
+    type FolderAncestryResponse,
+    type FolderResponse,
+    type ListContentResponse,
+    vaultKeys
+} from "@/entities/folder";
+import {decryptBytes, decryptString, importKey} from "@/shared/security";
 
 function getFileIcon(filename: string) {
     const ext = filename.split('.').pop()?.toLowerCase();
@@ -139,6 +135,50 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
+
+                let currentFolderKey = vaultKeys.getKey(folderId);
+                if (!currentFolderKey && folderId !== rootFolderId) {
+                    const ancestryResponse = await fetch(`${backendBaseUrl}/api/Folder/GetAncestry?folderId=${folderId}`, {
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" }
+                    });
+
+                    if (ancestryResponse.status === 401) {
+                        setGuest();
+                        navigate("/login", { replace: true });
+                        return;
+                    }
+
+                    if (!ancestryResponse.ok) throw new Error("Could not fetch folder lineage.");
+
+                    const ancestryData = await ancestryResponse.json() as FolderAncestryResponse;
+                    const lineage = ancestryData.items;
+
+                    const rootKey = vaultKeys.getKey(rootFolderId);
+                    if (!rootKey) throw new Error("Root key missing. Cannot rebuild chain. Please log in again.");
+
+                    for (let i = 1; i < lineage.length; i++) {
+                        const parentId = lineage[i - 1].id;
+                        const parentKey = vaultKeys.getKey(parentId);
+
+                        if (!parentKey) break;
+
+                        const keyBytes = base64ToBytes(lineage[i].encryptedKey);
+                        const decryptedRawKey = await decryptBytes(parentKey, keyBytes);
+                        const folderCryptoKey = await importKey(decryptedRawKey);
+
+                        vaultKeys.setKey(lineage[i].id, folderCryptoKey);
+                    }
+
+                    currentFolderKey = vaultKeys.getKey(folderId);
+                }
+
+                if (!currentFolderKey) {
+                    toast.error("Unable to verify security credentials for this directory.");
+                    navigate(`/folder/${rootFolderId}`, { replace: true });
+                    return;
+                }
+
                 const res = await fetch(`${backendBaseUrl}/api/Folder/GetContent?FolderId=${folderId}`, {
                     credentials: "include",
                     headers: {"Content-Type": "application/json"}
@@ -154,17 +194,34 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                 const json = (await res.json()) as ListContentResponse;
 
                 const foldersWithNames: UIFolder[] = await Promise.all(
-                    json.folders.map(async (f) => ({
-                        ...f,
-                        decryptedName: await decryptName(f.nameEncrypted),
-                    }))
+                    json.folders.map(async (f) => {
+                        try {
+                            const nameBytes = base64ToBytes(f.nameEncrypted);
+                            const keyBytes = base64ToBytes(f.folderKeyEncrypted);
+
+                            const decryptedName = await decryptString(currentFolderKey!, nameBytes);
+                            const decryptedRawKey = await decryptBytes(currentFolderKey!, keyBytes);
+                            const subFolderCryptoKey = await importKey(decryptedRawKey);
+
+                            vaultKeys.setKey(f.folderId, subFolderCryptoKey);
+
+                            return { ...f, decryptedName };
+                        } catch (err) {
+                            return { ...f, decryptedName: "Unable do decrypt" };
+                        }
+                    })
                 );
 
                 const filesWithNames: UIFile[] = await Promise.all(
-                    json.files.map(async (f) => ({
-                        ...f,
-                        decryptedName: await decryptName(f.fileNameEncrypted),
-                    }))
+                    json.files.map(async (f) => {
+                        try {
+                            const nameBytes = base64ToBytes(f.fileNameEncrypted);
+                            const decryptedName = await decryptString(currentFolderKey!, nameBytes);
+                            return { ...f, decryptedName };
+                        } catch (err) {
+                            return { ...f, decryptedName: "Unable do decrypt" };
+                        }
+                    })
                 );
 
                 setData({folders: foldersWithNames, files: filesWithNames});
@@ -277,14 +334,17 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
 
             const data = await res.json();
 
-            const byteCharacters = atob(data.fileContent);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
+            const parentFolderKey = vaultKeys.getKey(folderId);
+            if (!parentFolderKey) throw new Error("Cryptographic context missing. Please refresh.");
 
-            const blob = new Blob([byteArray], { type: data.mimeType || "application/octet-stream" });
+            const encryptedKeyBytes = base64ToBytes(data.encryptedKey);
+            const rawFileKeyBytes = await decryptBytes(parentFolderKey, encryptedKeyBytes);
+            const fileCryptoKey = await importKey(rawFileKeyBytes);
+
+            const encryptedContentBytes = base64ToBytes(data.fileContent);
+            const decryptedPlaintextBytes = await decryptBytes(fileCryptoKey, encryptedContentBytes);
+
+            const blob = new Blob([decryptedPlaintextBytes as unknown as BufferSource], { type: data.mimeType || "application/octet-stream" });
             const url = window.URL.createObjectURL(blob);
 
             const a = document.createElement("a");

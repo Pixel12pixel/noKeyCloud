@@ -59,6 +59,7 @@ export function AdminSetupDialog({ isOpen, onComplete }: AdminSetupDialogProps) 
                     encryptedMasterKey: cryptoPayload.encryptedMasterKeyBase64,
                     keySalt: cryptoPayload.keySaltBase64,
                     recoveryEncryptedMasterKey: cryptoPayload.recoveryEncryptedMasterKeyBase64,
+                    rootFolderKey: cryptoPayload.rootFolderEncryptedKeyBase64,
                     inviteCode: null
                 })
             });

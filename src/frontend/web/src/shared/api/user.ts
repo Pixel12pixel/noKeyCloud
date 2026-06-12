@@ -5,6 +5,7 @@ export interface UserProfileResponse {
     username: string;
     email: string;
     rootFolderId: string;
+    rootFolderKey: string;
     isAdmin?: boolean;
 }
 

@@ -15,6 +15,7 @@ export interface RegistrationPayload {
     encryptedMasterKeyBase64: string;
     recoveryEncryptedMasterKeyBase64: string;
     recoveryPasswordPlaintext: string;
+    rootFolderEncryptedKeyBase64: string;
 }
 
 export async function prepareRegistration(username: string, password: string): Promise<RegistrationPayload> {
@@ -34,12 +35,17 @@ export async function prepareRegistration(username: string, password: string): P
     const recoveryKek = await deriveKey(recoveryPasswordPlaintext, keySalt);
     const recoveryEncryptedMasterKey = await encryptBytes(recoveryKek, exportedMasterKey);
 
+    const rootFolderKey = await generateAesKey();
+    const exportedRootKey = await exportKey(rootFolderKey);
+    const rootFolderEncryptedKey = await encryptBytes(masterKey, exportedRootKey);
+
     return {
         srpSaltBase64,
         srpVerifierBase64,
         keySaltBase64: bytesToBase64(keySalt),
         encryptedMasterKeyBase64: bytesToBase64(encryptedMasterKey),
         recoveryEncryptedMasterKeyBase64: bytesToBase64(recoveryEncryptedMasterKey),
+        rootFolderEncryptedKeyBase64: bytesToBase64(rootFolderEncryptedKey),
         recoveryPasswordPlaintext
     };
 }
