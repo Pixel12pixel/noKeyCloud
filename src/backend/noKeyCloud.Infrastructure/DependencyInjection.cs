@@ -33,9 +33,7 @@ public static class DependencyInjection
             options.Configuration = redisConnectionString;
         });
 
-        services.AddSingleton<ICachedRefreshTokenProvider, CachedRefreshTokenProvider>();
-
-        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString)); //TODO: if can't connect, switch to inMemoryCache and print warning
 
         services.AddSingleton<ISrpSessionStore, SrpSessionStoreProvider>();
 
