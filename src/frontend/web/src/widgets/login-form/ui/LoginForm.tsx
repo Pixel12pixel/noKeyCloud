@@ -1,4 +1,4 @@
-import { cn } from "@/shared/lib/utils.ts"
+import { cn } from "@/shared/lib"
 import { Button } from "@/shared/ui/button.tsx"
 import {
   Card,

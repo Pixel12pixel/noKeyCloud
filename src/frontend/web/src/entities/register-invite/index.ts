@@ -1,0 +1,1 @@
+export type {RegisterInviteResponse} from './model/types';

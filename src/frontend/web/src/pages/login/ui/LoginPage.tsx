@@ -1,9 +1,9 @@
 import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
-import { loginWithSRP } from "../api/login";
-import { LoginForm } from "@/widgets/login-form/ui/LoginForm.tsx";
+import {importKey, loginWithSRP, deriveKey, decryptBytes} from "@/shared/security";
+import { LoginForm } from "@/widgets/login-form";
 import { useEffect } from "react";
-import { refreshAuth } from "@/entities/session/model/authStore";
-import { useAuth } from "@/entities/session/model/useAuth";
+import {refreshAuth, useAuth, setMasterKey, getAuthState} from "@/entities/session";
+import {base64ToBytes} from "@/shared/lib";
 
 export async function loginAction({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -17,11 +17,29 @@ export async function loginAction({ request }: ActionFunctionArgs) {
     try {
         const authData = await loginWithSRP(identifier, password);
 
-        void refreshAuth();
+        const keySaltBytes = base64ToBytes(authData.keySalt);
+        const encryptedMasterKeyBytes = base64ToBytes(authData.encryptedMasterKey);
 
-        return redirect(`/folder/${authData.rootFolderId}`);
-    } catch (error: any) {
-        return { error: { errors: { body: [error.message || "Failed to sign in. Please verify your credentials."] } } };
+        const kek = await deriveKey(password, keySaltBytes);
+
+        const rawMkBytes = await decryptBytes(kek, encryptedMasterKeyBytes);
+
+        const masterKey = await importKey(rawMkBytes);
+
+        setMasterKey(masterKey);
+
+        await refreshAuth();
+
+        const { rootFolderId } = getAuthState();
+
+        if (!rootFolderId) {
+            throw new Error("Failed to resolve user root directory.");
+        }
+
+        return redirect(`/folder/${rootFolderId}`);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to sign in. Please verify your credentials.";
+        return { error: { errors: { body: [errorMessage] } } };
     }
 }
 

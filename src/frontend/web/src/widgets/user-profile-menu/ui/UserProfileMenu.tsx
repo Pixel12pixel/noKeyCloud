@@ -4,13 +4,12 @@ import {
     DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/shared/ui/dropdown-menu";
 import {Avatar, AvatarFallback} from "@/shared/ui/avatar";
-import {logoutUserApi} from "@/shared/api/logout";
-import {setGuest} from "@/entities/session/model/authStore";
-import {useAuth} from "@/entities/session/model/useAuth";
+import {logoutUserApi} from "@/shared/api";
+import {setGuest, useAuth} from "@/entities/session";
 import {Settings, LogOut, ShieldUser} from "lucide-react";
 import { toast } from "sonner";
 import {useState} from "react";
-import {SettingsDialog} from "@/widgets/settings/ui/SettingsDialog";
+import {SettingsDialog} from "@/features/settings";
 
 export function UserProfileMenu() {
     const navigate = useNavigate();

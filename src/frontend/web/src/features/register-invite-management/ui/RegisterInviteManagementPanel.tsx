@@ -26,6 +26,7 @@ import {
     DialogTitle,
 } from "@/shared/ui/dialog";
 import {backendBaseUrl} from "@/shared/config";
+import type {RegisterInviteResponse} from "@/entities/register-invite";
 
 function CountdownTimer({expiresAt}: { expiresAt: string | null }) {
     const [timeLeft, setTimeLeft] = useState("");
@@ -71,15 +72,8 @@ function CountdownTimer({expiresAt}: { expiresAt: string | null }) {
     );
 }
 
-interface RegisterInviteCode {
-    id: string;
-    code: string;
-    createdAt: string;
-    expiresAt: string | null;
-}
-
 export function RegisterInviteManagementPanel() {
-    const [activeCodes, setActiveCodes] = useState<RegisterInviteCode[]>([]);
+    const [activeCodes, setActiveCodes] = useState<RegisterInviteResponse[]>([]);
     const [visibleCodes, setVisibleCodes] = useState<Set<string>>(new Set());
     const [isGenerating, setIsGenerating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -92,7 +86,7 @@ export function RegisterInviteManagementPanel() {
                 credentials: "include"
             });
             if (res.ok) {
-                const data = await res.json();
+                const data = (await res.json()) as RegisterInviteResponse[];
                 setActiveCodes(data);
             } else {
                 toast.error("Failed to load active invites.");
@@ -152,7 +146,7 @@ export function RegisterInviteManagementPanel() {
             });
 
             if (res.ok) {
-                const generatedInvite: RegisterInviteCode = await res.json();
+                const generatedInvite = (await res.json()) as RegisterInviteResponse;
                 await fetchInvites();
                 setSelectedQrCode(generatedInvite.code);
                 toast.success("New invite code generated!");

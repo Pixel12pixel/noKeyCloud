@@ -1,22 +1,21 @@
-﻿using System.Collections.Concurrent;
-using System.Text.Json;
+﻿using System.Text.Json;
 using noKeyCloud.Application.Abstractions.Services;
 using StackExchange.Redis;
 
 namespace noKeyCloud.Infrastructure.Services;
 
-public class SrpSessionStoreProvider : ISrpSessionStore
+public class SrpSessionStoreProvider(IConnectionMultiplexer redis) : ISrpSessionStore
 {
-    private readonly IDatabase _database;
-
-    public SrpSessionStoreProvider(IConnectionMultiplexer redis)
+    private readonly IDatabase _database = redis.GetDatabase();
+    
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        _database = redis.GetDatabase();
-    }
+        Converters = { new BigIntegerConverter() }
+    };
 
     public async Task SaveSessionAsync(Guid sessionId, Guid userId, SrpSession session)
     {
-        var sessionJson = JsonSerializer.Serialize(session);
+        var sessionJson = JsonSerializer.Serialize(session, JsonOptions);
         
         var sessionKey = $"srp:session:{sessionId}";
         var userKey = $"srp:user:{sessionId}";
@@ -36,7 +35,7 @@ public class SrpSessionStoreProvider : ISrpSessionStore
         
         if (value.IsNullOrEmpty) return null;
         
-        return JsonSerializer.Deserialize<SrpSession>(value.ToString());
+        return JsonSerializer.Deserialize<SrpSession>(value.ToString(), JsonOptions);
     }
 
     public async Task<Guid?> GetUserIdAsync(Guid sessionId)
