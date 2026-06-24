@@ -21,6 +21,13 @@ public class Program
             throw new InvalidOperationException("CRITICAL ERROR: 'FRONTEND_URL' environment variable is missing. It is required for CORS and security.");
         }
 
+        var uploadStoragePath = Environment.GetEnvironmentVariable("BASE_UPLOAD_STORAGE_PATH");
+
+        if (string.IsNullOrWhiteSpace(uploadStoragePath))
+        {
+            throw new InvalidOperationException("CRITICAL ERROR: 'BASE_UPLOAD_STORAGE_PATH' environment variable is missing. It is required for file uploads.");
+        }
+
         if (!Uri.TryCreate(frontendUrl, UriKind.Absolute, out var parsedUri) || (parsedUri.Scheme != "http" && parsedUri.Scheme != "https"))
         {
             throw new InvalidOperationException($"CRITICAL ERROR: 'FRONTEND_URL' ({frontendUrl}) is malformed. It must be a valid absolute HTTP or HTTPS URL (e.g., http://localhost:5173)");
@@ -95,7 +102,7 @@ public class Program
         });
 
         app.UseContentSecurityPolicy();
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
 
         app.UseCors("FrontendOrigin");
 
