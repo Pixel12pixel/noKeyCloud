@@ -15,6 +15,7 @@ import {
 import {bytesToBase64, cn, formatBytes} from "@/shared/lib";
 import {vaultKeys} from "@/entities/folder";
 import {encryptBytes, encryptString, exportKey, generateAesKey} from "@/shared/security";
+import {customFetch} from "@/shared/api";
 
 interface UploadFileDialogProps {
     parentId: string;
@@ -130,7 +131,7 @@ export function UploadFileDialog({ parentId, children, onSuccess }: UploadFileDi
 
                 setFiles(prev => prev.map(f => f.id === currentFile.id ? { ...f, status: 'uploading' } : f));
 
-                const response = await fetch(`${backendBaseUrl}/api/File/upload`, {
+                const response = await customFetch(`${backendBaseUrl}/api/File/upload`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },

@@ -16,6 +16,7 @@ import {backendBaseUrl} from "@/shared/config";
 import {vaultKeys} from "@/entities/folder";
 import {encryptBytes, encryptString, exportKey, generateAesKey} from "@/shared/security";
 import {bytesToBase64} from "@/shared/lib";
+import {customFetch} from "@/shared/api";
 
 interface CreateFolderDialogProps {
     parentId: string;
@@ -50,7 +51,7 @@ export function CreateFolderDialog({parentId, children, onSuccess}: CreateFolder
                 parentFolderId: parentId
             };
 
-            const response = await fetch(`${backendBaseUrl}/api/Folder`, {
+            const response = await customFetch(`${backendBaseUrl}/api/Folder`, {
                 method: "POST",
                 credentials: "include",
                 headers: {

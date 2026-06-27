@@ -89,7 +89,7 @@ public class AuthenticateController : ControllerBase
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Path = "/api/Authenticate/refresh",
+                Path = "/",
                 Expires = DateTime.UtcNow.AddHours(24)
             });
 
@@ -133,7 +133,7 @@ public class AuthenticateController : ControllerBase
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Path = "/api/Authenticate/refresh",
+            Path = "/",
             Expires = DateTime.UtcNow.AddHours(24)
         });
 
