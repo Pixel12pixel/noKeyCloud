@@ -37,6 +37,7 @@ import {
     vaultKeys
 } from "@/entities/folder";
 import {decryptBytes, decryptString, importKey} from "@/shared/security";
+import {customFetch} from "@/shared/api";
 
 function getFileIcon(filename: string) {
     const ext = filename.split('.').pop()?.toLowerCase();
@@ -138,7 +139,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
 
                 let currentFolderKey = vaultKeys.getKey(folderId);
                 if (!currentFolderKey && folderId !== rootFolderId) {
-                    const ancestryResponse = await fetch(`${backendBaseUrl}/api/Folder/GetAncestry?folderId=${folderId}`, {
+                    const ancestryResponse = await customFetch(`${backendBaseUrl}/api/Folder/GetAncestry?folderId=${folderId}`, {
                         credentials: "include",
                         headers: { "Content-Type": "application/json" }
                     });
@@ -179,7 +180,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                     return;
                 }
 
-                const res = await fetch(`${backendBaseUrl}/api/Folder/GetContent?FolderId=${folderId}`, {
+                const res = await customFetch(`${backendBaseUrl}/api/Folder/GetContent?FolderId=${folderId}`, {
                     credentials: "include",
                     headers: {"Content-Type": "application/json"}
                 });
@@ -325,7 +326,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
         const loadingToast = toast.loading(`Downloading ${fileName}...`);
 
         try {
-            const res = await fetch(`${backendBaseUrl}/api/File/${fileId}`, {
+            const res = await customFetch(`${backendBaseUrl}/api/File/${fileId}`, {
                 method: "GET",
                 credentials: "include"
             });
