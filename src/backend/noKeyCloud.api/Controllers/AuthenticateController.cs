@@ -32,6 +32,10 @@ public class AuthenticateController : ControllerBase
             request.Email,
             request.Salt,
             request.Verifier,
+            request.EncryptedMasterKey,
+            request.KeySalt,
+            request.RecoveryEncryptedMasterKey,
+            request.RootFolderKey,
             request.RegisterInviteCode);
 
         var result = await _mediator.Send(command);
@@ -85,7 +89,7 @@ public class AuthenticateController : ControllerBase
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Path = "/api/Authenticate/refresh",
+                Path = "/",
                 Expires = DateTime.UtcNow.AddHours(24)
             });
 
@@ -107,7 +111,7 @@ public class AuthenticateController : ControllerBase
             return Unauthorized("Refresh token is missing.");
         }
 
-        var command = new RefreshSessionCommand(request.UserId, refreshTokenCookie);
+        var command = new RefreshSessionCommand(refreshTokenCookie);
         var result = await _mediator.Send(command);
 
         if (!result.IsSuccess)
@@ -129,7 +133,7 @@ public class AuthenticateController : ControllerBase
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Path = "/api/Authenticate/refresh",
+            Path = "/",
             Expires = DateTime.UtcNow.AddHours(24)
         });
 

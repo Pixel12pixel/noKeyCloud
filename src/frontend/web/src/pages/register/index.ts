@@ -1,0 +1,1 @@
+export {RegisterPage, registerAction} from './ui/RegisterPage';

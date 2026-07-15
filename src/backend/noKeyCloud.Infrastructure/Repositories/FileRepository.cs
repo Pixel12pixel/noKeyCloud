@@ -10,21 +10,28 @@ public class FileRepository : IFileRepository
 {
     private const string FileExtension = ".nkc";
     private readonly DataContext _context;
-    private const string BaseStoragePath = "/data";
+    private readonly string _baseStoragePath;
 
     public FileRepository(DataContext context)
     {
         _context = context;
-
-        if (!Directory.Exists(BaseStoragePath))
+        
+        var envPath = Environment.GetEnvironmentVariable("BASE_UPLOAD_STORAGE_PATH");
+        if (string.IsNullOrWhiteSpace(envPath))
         {
-            Directory.CreateDirectory(BaseStoragePath);
+            throw new InvalidOperationException("Required environment variable 'BASE_UPLOAD_STORAGE_PATH' is missing or empty. Configure 'BASE_UPLOAD_STORAGE_PATH' before starting the application.");
+        }
+        _baseStoragePath = envPath;
+
+        if (!Directory.Exists(_baseStoragePath))
+        {
+            Directory.CreateDirectory(_baseStoragePath);
         }
     }
 
     public async Task CreateFile(File file, CancellationToken cancellationToken, byte[]? fileContent = null)
     {
-        var fullPath = Path.Combine(BaseStoragePath, $"{file.Id}{FileExtension}");
+        var fullPath = Path.Combine(_baseStoragePath, $"{file.Id}{FileExtension}");
 
         var exists = await _context.Files.AnyAsync(f => f.Id == file.Id, cancellationToken);
 
@@ -54,7 +61,6 @@ public class FileRepository : IFileRepository
 
     public async Task<(File, byte[])> GetFileById(Guid fileId, Guid userId, CancellationToken cancellationToken)
     {
-        var fullPath = Path.Combine(BaseStoragePath, $"{fileId}{FileExtension}");
         var file = await _context.Files.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
         if (file == null)
         {
@@ -76,7 +82,7 @@ public class FileRepository : IFileRepository
 
     public async Task<byte[]> DownloadFile(File file, CancellationToken cancellationToken)
     {
-        var fullPath = Path.Combine(BaseStoragePath, $"{file.Id}{FileExtension}");
+        var fullPath = Path.Combine(_baseStoragePath, $"{file.Id}{FileExtension}");
         if (!System.IO.File.Exists(fullPath))
         {
             throw new Exception("Couldn't find the file content.");

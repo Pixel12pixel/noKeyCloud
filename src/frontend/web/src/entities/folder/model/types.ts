@@ -22,3 +22,13 @@ export interface ListContentResponse {
     files: FileResponse[];
     folders: FolderResponse[];
 }
+
+export interface FolderAncestryItem {
+    id: string;
+    encryptedName: string;
+    encryptedKey: string;
+}
+
+export interface FolderAncestryResponse {
+    items: FolderAncestryItem[];
+}

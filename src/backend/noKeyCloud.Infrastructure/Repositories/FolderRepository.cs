@@ -45,5 +45,12 @@ public class FolderRepository : IFolderRepository
             .FirstOrDefaultAsync(f => f.UserId == UserId && f.ParentFolderId == null, cancellationToken);
         return folder;
     }
+    
+    public async Task<Folder?> GetByIdAndUserIdAsync(Guid folderId, Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Folders
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == folderId && x.UserId == userId, cancellationToken);
+    }
 
 }

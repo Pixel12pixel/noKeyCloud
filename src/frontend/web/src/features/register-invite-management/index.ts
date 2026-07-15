@@ -1,0 +1,1 @@
+export {RegisterInviteManagementPanel} from "./ui/RegisterInviteManagementPanel";

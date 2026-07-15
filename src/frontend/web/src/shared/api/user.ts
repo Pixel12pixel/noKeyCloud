@@ -1,15 +1,17 @@
-import { backendBaseUrl } from "@/shared/config/backend";
+import { backendBaseUrl } from "@/shared/config";
+import {customFetch} from "@/shared/api";
 
 export interface UserProfileResponse {
     userId: string;
     username: string;
     email: string;
     rootFolderId: string;
+    rootFolderKey: string;
     isAdmin?: boolean;
 }
 
 export async function fetchCurrentUser(): Promise<UserProfileResponse | null> {
-    const response = await fetch(`${backendBaseUrl}/api/Users/me`, {
+    const response = await customFetch(`${backendBaseUrl}/api/Users/me`, {
         method: "GET",
         credentials: "include",
         headers: {

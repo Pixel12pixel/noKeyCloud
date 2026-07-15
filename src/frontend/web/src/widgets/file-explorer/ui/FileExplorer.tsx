@@ -9,29 +9,35 @@ import {
     Image as ImageIcon,
     Music,
     Video,
-    Folder
+    Folder,
+    Download
 } from "lucide-react";
 import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {backendBaseUrl} from "@/shared/config";
 import {Button} from "@/shared/ui/button.tsx";
-import {cn, formatBytes} from "@/shared/lib/utils.ts";
+import {base64ToBytes, cn, formatBytes} from "@/shared/lib";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/shared/ui/table";
 import { format } from "date-fns";
-import { setGuest } from "@/entities/session/model/authStore";
-
-async function decryptName(encryptedBase64: string): Promise<string> {
-    try {
-        // TODO: Replace with actual name decryption when encryption implemented
-        const binString = atob(encryptedBase64);
-        const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0)!);
-        return new TextDecoder().decode(bytes);
-    } catch {
-        return "Unknown File";
-    }
-}
+import { setGuest } from "@/entities/session";
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuTrigger,
+} from "@/shared/ui/context-menu";
+import { toast } from "sonner";
+import {
+    type FileResponse,
+    type FolderAncestryResponse,
+    type FolderResponse,
+    type ListContentResponse,
+    vaultKeys
+} from "@/entities/folder";
+import {decryptBytes, decryptString, importKey} from "@/shared/security";
+import {customFetch} from "@/shared/api";
 
 function getFileIcon(filename: string) {
     const ext = filename.split('.').pop()?.toLowerCase();
@@ -81,9 +87,17 @@ interface FileExplorerProps {
     rootFolderId: string;
 }
 
+interface UIFile extends FileResponse {
+    decryptedName: string;
+}
+
+interface UIFolder extends FolderResponse {
+    decryptedName: string;
+}
+
 export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
     const navigate = useNavigate();
-    const [data, setData] = useState<{ folders: any[], files: any[] } | null>(null);
+    const [data, setData] = useState<{ folders: UIFolder[], files: UIFile[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({
         key: "name",
@@ -122,7 +136,51 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
-                const res = await fetch(`${backendBaseUrl}/api/Folder/GetContent?FolderId=${folderId}`, {
+
+                let currentFolderKey = vaultKeys.getKey(folderId);
+                if (!currentFolderKey && folderId !== rootFolderId) {
+                    const ancestryResponse = await customFetch(`${backendBaseUrl}/api/Folder/GetAncestry?folderId=${folderId}`, {
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" }
+                    });
+
+                    if (ancestryResponse.status === 401) {
+                        setGuest();
+                        navigate("/login", { replace: true });
+                        return;
+                    }
+
+                    if (!ancestryResponse.ok) throw new Error("Could not fetch folder lineage.");
+
+                    const ancestryData = await ancestryResponse.json() as FolderAncestryResponse;
+                    const lineage = ancestryData.items;
+
+                    const rootKey = vaultKeys.getKey(rootFolderId);
+                    if (!rootKey) throw new Error("Root key missing. Cannot rebuild chain. Please log in again.");
+
+                    for (let i = 1; i < lineage.length; i++) {
+                        const parentId = lineage[i - 1].id;
+                        const parentKey = vaultKeys.getKey(parentId);
+
+                        if (!parentKey) break;
+
+                        const keyBytes = base64ToBytes(lineage[i].encryptedKey);
+                        const decryptedRawKey = await decryptBytes(parentKey, keyBytes);
+                        const folderCryptoKey = await importKey(decryptedRawKey);
+
+                        vaultKeys.setKey(lineage[i].id, folderCryptoKey);
+                    }
+
+                    currentFolderKey = vaultKeys.getKey(folderId);
+                }
+
+                if (!currentFolderKey) {
+                    toast.error("Unable to verify security credentials for this directory.");
+                    navigate(`/folder/${rootFolderId}`, { replace: true });
+                    return;
+                }
+
+                const res = await customFetch(`${backendBaseUrl}/api/Folder/GetContent?FolderId=${folderId}`, {
                     credentials: "include",
                     headers: {"Content-Type": "application/json"}
                 });
@@ -134,17 +192,38 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                 }
 
                 if (!res.ok) throw new Error("Failed to load content.");
-                const json = await res.json();
+                const json = (await res.json()) as ListContentResponse;
 
-                const foldersWithNames = await Promise.all(json.folders.map(async (f: any) => ({
-                    ...f,
-                    decryptedName: await decryptName(f.nameEncrypted),
-                })));
+                const foldersWithNames: UIFolder[] = await Promise.all(
+                    json.folders.map(async (f) => {
+                        try {
+                            const nameBytes = base64ToBytes(f.nameEncrypted);
+                            const keyBytes = base64ToBytes(f.folderKeyEncrypted);
 
-                const filesWithNames = await Promise.all(json.files.map(async (f: any) => ({
-                    ...f,
-                    decryptedName: await decryptName(f.fileNameEncrypted),
-                })));
+                            const decryptedName = await decryptString(currentFolderKey!, nameBytes);
+                            const decryptedRawKey = await decryptBytes(currentFolderKey!, keyBytes);
+                            const subFolderCryptoKey = await importKey(decryptedRawKey);
+
+                            vaultKeys.setKey(f.folderId, subFolderCryptoKey);
+
+                            return { ...f, decryptedName };
+                        } catch (err) {
+                            return { ...f, decryptedName: "Unable do decrypt" };
+                        }
+                    })
+                );
+
+                const filesWithNames: UIFile[] = await Promise.all(
+                    json.files.map(async (f) => {
+                        try {
+                            const nameBytes = base64ToBytes(f.fileNameEncrypted);
+                            const decryptedName = await decryptString(currentFolderKey!, nameBytes);
+                            return { ...f, decryptedName };
+                        } catch (err) {
+                            return { ...f, decryptedName: "Unable do decrypt" };
+                        }
+                    })
+                );
 
                 setData({folders: foldersWithNames, files: filesWithNames});
             } catch (error) {
@@ -198,15 +277,15 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
     if (isLoading) return <div className="p-8 text-center text-slate-500">Decrypting and loading files...</div>;
     if (!data) return null;
 
-    const sortItems = (items: any[]) => {
+    const sortItems = <T extends UIFile | UIFolder>(items: T[]): T[] => {
         return [...items].sort((a, b) => {
             let valA, valB;
             if (sortConfig.key === "name") {
                 valA = a.decryptedName.toLowerCase();
                 valB = b.decryptedName.toLowerCase();
             } else if (sortConfig.key === "size") {
-                valA = a.sizeBytes || 0;
-                valB = b.sizeBytes || 0;
+                valA = 'sizeBytes' in a ? a.sizeBytes : 0;
+                valB = 'sizeBytes' in b ? b.sizeBytes : 0;
             } else {
                 valA = new Date(a.updatedAt).getTime();
                 valB = new Date(b.updatedAt).getTime();
@@ -243,6 +322,48 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
         );
     };
 
+    const handleDownload = async (fileId: string, fileName: string) => {
+        const loadingToast = toast.loading(`Downloading ${fileName}...`);
+
+        try {
+            const res = await customFetch(`${backendBaseUrl}/api/File/${fileId}`, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) throw new Error("Failed to download file.");
+
+            const data = await res.json();
+
+            const parentFolderKey = vaultKeys.getKey(folderId);
+            if (!parentFolderKey) throw new Error("Cryptographic context missing. Please refresh.");
+
+            const encryptedKeyBytes = base64ToBytes(data.encryptedKey);
+            const rawFileKeyBytes = await decryptBytes(parentFolderKey, encryptedKeyBytes);
+            const fileCryptoKey = await importKey(rawFileKeyBytes);
+
+            const encryptedContentBytes = base64ToBytes(data.fileContent);
+            const decryptedPlaintextBytes = await decryptBytes(fileCryptoKey, encryptedContentBytes);
+
+            const blob = new Blob([decryptedPlaintextBytes as unknown as BufferSource], { type: data.mimeType || "application/octet-stream" });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            toast.success("Download complete", { id: loadingToast });
+        } catch (error) {
+            console.error("Download error:", error);
+            toast.error("Failed to download file", { id: loadingToast });
+        }
+    };
+
     return (
         <div>
             <div className="flex items-center gap-2 mb-4 bg-muted/30 p-2 rounded-md">
@@ -254,7 +375,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                     <ArrowLeft className="h-4 w-4"/>
                 </Button>
 
-                <div className="h-4 w-[1px] bg-border mx-2"/>
+                <div className="h-4 w-px bg-border mx-2"/>
 
                 <div className="flex items-center flex-wrap gap-1 text-sm font-medium">
                     {breadcrumbHistory.map((crumb, idx) => (
@@ -277,10 +398,10 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <SortableHeader label="Name" sortKey="name" className="w-[100%]"/>
-                            <SortableHeader label="Modified" sortKey="updatedAt" className="min-w-[150px] w-[150px]"/>
+                            <SortableHeader label="Name" sortKey="name" className="w-full"/>
+                            <SortableHeader label="Modified" sortKey="updatedAt" className="min-w-37.5 w-37.5"/>
                             <SortableHeader label="Size" sortKey="size"
-                                            className="min-w-[100px] w-[100px] whitespace-nowrap text-right"/>
+                                            className="min-w-25 w-25 whitespace-nowrap text-right"/>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -292,7 +413,7 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                             >
                                 <TableCell className="font-medium flex items-center gap-3">
                                     <Folder className="h-5 w-5 text-blue-500 fill-blue-500/20"/>
-                                    <span className="truncate max-w-[400px]"
+                                    <span className="truncate max-w-100"
                                           title={folder.decryptedName}>{folder.decryptedName}</span>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground whitespace-nowrap">
@@ -303,19 +424,34 @@ export function FileExplorer({ folderId, rootFolderId }: FileExplorerProps) {
                         ))}
 
                         {sortedFiles.map((file) => (
-                            <TableRow key={file.filesId} className="hover:bg-muted/50">
-                                <TableCell className="font-medium flex items-center gap-3">
-                                    {getFileIcon(file.decryptedName)}
-                                    <span className="truncate max-w-[400px]"
-                                          title={file.decryptedName}>{file.decryptedName}</span>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground whitespace-nowrap">
-                                    {format(new Date(file.updatedAt), "dd-MM-yyyy HH:mm")}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground whitespace-nowrap text-right">
-                                    {formatBytes(file.sizeBytes)}
-                                </TableCell>
-                            </TableRow>
+                            <ContextMenu key={file.filesId}>
+                                <ContextMenuTrigger
+                                    render={
+                                        <TableRow
+                                            className="hover:bg-muted/50 cursor-context-menu"
+                                            style={{ display: "table-row" }}
+                                        />
+                                    }
+                                >
+                                    <TableCell className="font-medium flex items-center gap-3">
+                                        {getFileIcon(file.decryptedName)}
+                                        <span className="truncate max-w-100"
+                                              title={file.decryptedName}>{file.decryptedName}</span>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                                        {format(new Date(file.updatedAt), "dd-MM-yyyy HH:mm")}
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground whitespace-nowrap text-right">
+                                        {formatBytes(file.sizeBytes)}
+                                    </TableCell>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent className="w-48">
+                                    <ContextMenuItem onClick={() => handleDownload(file.filesId, file.decryptedName)}>
+                                        <Download className="mr-2 h-2 w-2" />
+                                        Download
+                                    </ContextMenuItem>
+                                </ContextMenuContent>
+                            </ContextMenu>
                         ))}
 
                         {sortedFolders.length === 0 && sortedFiles.length === 0 && (

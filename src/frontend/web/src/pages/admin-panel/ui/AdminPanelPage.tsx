@@ -1,9 +1,9 @@
 import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
-import {useAuth} from "@/entities/session/model/useAuth.ts";
+import {useAuth} from "@/entities/session";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/shared/ui/tabs.tsx";
 import {Link} from "lucide-react";
-import {RegisterInviteManagementPanel} from "@/features/register-invite-management/ui/RegisterInviteManagementPanel";
+import {RegisterInviteManagementPanel} from "@/features/register-invite-management";
 
 export function AdminPanelPage() {
     const navigate = useNavigate();

@@ -1,8 +1,9 @@
-import {useEffect} from "react";
-import {RegisterForm} from "@/widgets/register-form/ui/RegisterForm";
-import {type ActionFunctionArgs, redirect, useActionData, useNavigation} from "react-router-dom";
-import {generateSrpVerifier} from "@/shared/security/srp-native.ts";
+import {useEffect, useState} from "react";
+import {RegisterForm} from "@/widgets/register-form";
+import {type ActionFunctionArgs, useActionData, useNavigate, useNavigation} from "react-router-dom";
+import {prepareRegistration} from "@/shared/security";
 import {backendBaseUrl} from "@/shared/config";
+import {BackupCodesDialog} from "@/features/backup-codes";
 
 export async function registerAction({request}: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -30,7 +31,7 @@ export async function registerAction({request}: ActionFunctionArgs) {
     }
 
     try {
-        const authData = await generateSrpVerifier(username || email, password);
+        const cryptoPayload = await prepareRegistration(username || email, password);
 
         const response = await fetch(`${backendBaseUrl}/api/Authenticate/register`, {
             method: "POST",
@@ -38,8 +39,12 @@ export async function registerAction({request}: ActionFunctionArgs) {
             body: JSON.stringify({
                 username,
                 email,
-                salt: authData.saltBase64,
-                verifier: authData.verifierBase64,
+                salt: cryptoPayload.srpSaltBase64,
+                verifier: cryptoPayload.srpVerifierBase64,
+                encryptedMasterKey: cryptoPayload.encryptedMasterKeyBase64,
+                keySalt: cryptoPayload.keySaltBase64,
+                recoveryEncryptedMasterKey: cryptoPayload.recoveryEncryptedMasterKeyBase64,
+                rootFolderKey: cryptoPayload.rootFolderEncryptedKeyBase64,
                 registerInviteCode: registerInviteCode
             })
         });
@@ -49,22 +54,46 @@ export async function registerAction({request}: ActionFunctionArgs) {
             return {error: {errors: {body: [errorText || "Invalid invite code or registration failed."]}}};
         }
 
-
-        return redirect(`/login`);
-    } catch (error: any) {
-        return {error: {errors: {body: [error.message || "Failed to create account"]}}};
+        return { success: true, recoveryCode: cryptoPayload.recoveryPasswordPlaintext, username: username };
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to create account";
+        return {error: {errors: {body: [errorMessage]}}};
     }
 }
 
 export function RegisterPage() {
     const actionData = useActionData<typeof registerAction>();
     const navigation = useNavigation();
+    const navigate = useNavigate();
     const isSubmitting = navigation.state === "submitting";
     const errorMessage = actionData?.error?.errors?.body?.[0];
+    const [showRecovery, setShowRecovery] = useState(false);
 
     useEffect(() => {
         document.title = "Register - noKeyCloud";
     }, []);
+
+    useEffect(() => {
+        if (actionData?.success && actionData?.recoveryCode) {
+            setShowRecovery(true);
+        }
+    }, [actionData]);
+
+    const handleRecoveryAcknowledged = () => {
+        setShowRecovery(false);
+        navigate("/login");
+    };
+
+    if (showRecovery && actionData?.recoveryCode) {
+        return (
+            <BackupCodesDialog
+                open={true}
+                username={actionData.username}
+                onAcknowledge={handleRecoveryAcknowledged}
+                codes={[actionData.recoveryCode]}
+            />
+        );
+    }
 
     return (
         <div className="flex flex-1 w-full items-center justify-center p-6 md:p-10">

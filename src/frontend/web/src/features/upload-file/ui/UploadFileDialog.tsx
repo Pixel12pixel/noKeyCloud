@@ -12,7 +12,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/shared/ui/dialog";
-import { cn, formatBytes } from "@/shared/lib/utils";
+import {bytesToBase64, cn, formatBytes} from "@/shared/lib";
+import {vaultKeys} from "@/entities/folder";
+import {encryptBytes, encryptString, exportKey, generateAesKey} from "@/shared/security";
+import {customFetch} from "@/shared/api";
 
 interface UploadFileDialogProps {
     parentId: string;
@@ -86,6 +89,13 @@ export function UploadFileDialog({ parentId, children, onSuccess }: UploadFileDi
         setIsUploading(true);
         let hasError = false;
 
+        const parentKey = vaultKeys.getKey(parentId);
+        if (!parentKey) {
+            toast.error("Vault is locked or parent key is missing.");
+            setIsUploading(false);
+            return;
+        }
+
         for (let i = 0; i < files.length; i++) {
             const currentFile = files[i];
 
@@ -94,37 +104,34 @@ export function UploadFileDialog({ parentId, children, onSuccess }: UploadFileDi
             try {
                 setFiles(prev => prev.map(f => f.id === currentFile.id ? { ...f, status: 'processing' } : f));
 
-                const base64Content = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const result = reader.result as string;
-                        resolve(result.split(',')[1]);
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(currentFile.file);
-                });
+                const arrayBuffer = await currentFile.file.arrayBuffer();
+                const fileBytes = new Uint8Array(arrayBuffer);
 
-                // TODO: implement real encryption
-                const encoder = new TextEncoder();
-                const fileNameBytes = encoder.encode(currentFile.file.name);
-                const fileNameBase64 = btoa(String.fromCharCode.apply(null, Array.from(fileNameBytes)));
+                const fileKey = await generateAesKey();
 
-                const dummyKey = btoa("key");
-                const dummyChecksum = btoa("checksum");
+                const encryptedFileBytes = await encryptBytes(fileKey, fileBytes);
+
+                const exportedFileKey = await exportKey(fileKey);
+                const encryptedFileKey = await encryptBytes(parentKey, exportedFileKey);
+
+                const encryptedName = await encryptString(parentKey, currentFile.file.name);
+
+                const checksumBuffer = await crypto.subtle.digest("SHA-256", encryptedFileBytes as unknown as BufferSource);
+                const checksumBytes = new Uint8Array(checksumBuffer);
 
                 const payload = {
-                    fileName: fileNameBase64,
+                    fileName: bytesToBase64(encryptedName),
                     mimeType: currentFile.file.type || "application/octet-stream",
-                    sizeBytes: currentFile.file.size,
-                    encryptedKey: dummyKey,
-                    checksum: dummyChecksum,
+                    sizeBytes: encryptedFileBytes.length,
+                    encryptedKey: bytesToBase64(encryptedFileKey),
+                    checksum: bytesToBase64(checksumBytes),
                     folderId: parentId,
-                    fileContent: base64Content
+                    fileContent: bytesToBase64(encryptedFileBytes)
                 };
 
                 setFiles(prev => prev.map(f => f.id === currentFile.id ? { ...f, status: 'uploading' } : f));
 
-                const response = await fetch(`${backendBaseUrl}/api/File/upload`, {
+                const response = await customFetch(`${backendBaseUrl}/api/File/upload`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },

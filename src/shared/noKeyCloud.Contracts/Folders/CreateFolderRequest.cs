@@ -1,5 +1,6 @@
 ﻿namespace noKeyCloud.api.Controllers.DTOs;
 
 public record CreateFolderRequest(
-    string Name,
+    byte[] EncryptedName,
+    byte[] EncryptedKey,
     Guid? ParentFolderId);

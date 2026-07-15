@@ -1,14 +1,14 @@
 services:
   caddy:
-    image: caddy:alpine
+    image: caddy:2-alpine
     container_name: nokeycloud-proxy
     ports:
       - "8780:80"
       - "8743:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./data/caddy_data:/data
+      - ./data/caddy_config:/config
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
     depends_on:
@@ -17,60 +17,66 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:alpine
+    image: postgres:18-alpine
     container_name: nokeycloud-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nokeycloud_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nokeycloud_password}
       POSTGRES_DB: ${POSTGRES_DB:-nokeycloud_db}
     volumes:
-      - db_data:/var/lib/postgresql
+      - ./data/db_data:/var/lib/postgresql
     restart: unless-stopped
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: nokeycloud-redis
     command: redis-server --requirepass ${REDIS_PASSWORD:-nokeycloud_redis_password}
     volumes:
-      - redis_data:/data
+      - ./data/redis_data:/data
     restart: unless-stopped
+    
+  setup-permissions:
+    image: alpine:latest
+    container_name: nokeycloud-setup
+    restart: "no"
+    volumes:
+      - ./data:/host_data
+    command: sh -c "mkdir -p /host_data/upload && chown -R 1654:1654 /host_data/upload"
 
   backend:
     build:
       context: .
       dockerfile: src/backend/noKeyCloud.api/Dockerfile
+      network: host
     container_name: nokeycloud-backend
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - DB_HOST=postgres://${POSTGRES_USER:-nokeycloud_user}:${POSTGRES_PASSWORD:-nokeycloud_password}@db:5432/${POSTGRES_DB:-nokeycloud_db}
       - REDIS_HOST=redis:6379,password=${REDIS_PASSWORD:-nokeycloud_redis_password}
-      - JwtSettings__SecretKey=${JWT_SECRET:-zwotTvJmQiQvvipwDfFZ0+r7Go3iwBbvaGlqSb0G9JhxhhCYi9K0ZIAI+tJY2Bfd
-        - qdG7e+ZcAupA+MCC+3x4RHQFQt2Ra8a5JN19YYQkwbpgBKp6+Hfrlvpl8hGR/VLU
-        - 1s16Laaoe3CL5IbpyE2JadjRubw4Xaegx2qpeSQ0THE=}
+      - JwtSettings__SecretKey=${JWT_SECRET:-zwotTvJmQiQvvipwDfFZ0+r7Go3iwBbvaGlqSb0G9JhxhhCYi9K0ZIAI+tJY2BfdqdG7e+ZcAupA+MCC+3x4RHQFQt2Ra8a5JN19YYQkwbpgBKp6+Hfrlvpl8hGR/VLU1s16Laaoe3CL5IbpyE2JadjRubw4Xaegx2qpeSQ0THE=}
       - FRONTEND_URL=https://${DOMAIN_NAME:-localhost}:8743
+      - BASE_UPLOAD_STORAGE_PATH=${BASE_UPLOAD_STORAGE_PATH:-/uploads}
     volumes:
-      - app_data:/data
-      - app_config:/config
+      - ./data/app_data:/data
+      - ./data/app_config:/config
+      - ./data/upload:/uploads
     depends_on:
-      - db
-      - redis
+      setup-permissions:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
     build:
       context: src/frontend/web
       dockerfile: Dockerfile
+      network: host
       args:
         - VITE_BACKEND_URL=https://${DOMAIN_NAME:-localhost}:8743
     container_name: nokeycloud-frontend
     depends_on:
       - backend
     restart: unless-stopped
-
-volumes:
-  db_data:
-  redis_data:
-  app_data:
-  app_config:
-  caddy_data:
-  caddy_config:

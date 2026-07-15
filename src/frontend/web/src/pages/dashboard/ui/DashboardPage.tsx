@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/entities/session/model/useAuth";
-import { FileExplorer } from "@/widgets/file-explorer/ui/FileExplorer";
+import { useAuth } from "@/entities/session";
+import { FileExplorer } from "@/widgets/file-explorer";
 import { Button } from "@/shared/ui/button";
 import {FolderPlus, Upload} from "lucide-react";
-import { CreateFolderDialog } from "@/features/create-folder/ui/CreateFolderDialog";
-import { UploadFileDialog } from "@/features/upload-file/ui/UploadFileDialog";
+import { CreateFolderDialog } from "@/features/create-folder";
+import { UploadFileDialog } from "@/features/upload-file";
 
 export function DashboardPage() {
     const navigate = useNavigate();

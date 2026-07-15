@@ -13,11 +13,10 @@ import {
     DialogTrigger,
 } from "@/shared/ui/dialog";
 import {backendBaseUrl} from "@/shared/config";
-
-async function encryptName(name: string): Promise<string> {
-    // TODO: implement name encryption
-    return name;
-}
+import {vaultKeys} from "@/entities/folder";
+import {encryptBytes, encryptString, exportKey, generateAesKey} from "@/shared/security";
+import {bytesToBase64} from "@/shared/lib";
+import {customFetch} from "@/shared/api";
 
 interface CreateFolderDialogProps {
     parentId: string;
@@ -36,14 +35,23 @@ export function CreateFolderDialog({parentId, children, onSuccess}: CreateFolder
 
         try {
             setIsSubmitting(true);
-            const encryptedName = await encryptName(folderName);
+
+            const parentKey = vaultKeys.getKey(parentId);
+            if (!parentKey) throw new Error("Encryption key for parent folder not found");
+
+            const newFolderKey = await generateAesKey();
+            const exportedNewFolderKey = await exportKey(newFolderKey);
+
+            const encryptedName = await encryptString(parentKey, folderName);
+            const encryptedNewFolderKey = await encryptBytes(parentKey, exportedNewFolderKey);
 
             const payload = {
-                name: encryptedName,
+                encryptedName: bytesToBase64(encryptedName),
+                encryptedKey: bytesToBase64(encryptedNewFolderKey),
                 parentFolderId: parentId
             };
 
-            const response = await fetch(`${backendBaseUrl}/api/Folder`, {
+            const response = await customFetch(`${backendBaseUrl}/api/Folder`, {
                 method: "POST",
                 credentials: "include",
                 headers: {

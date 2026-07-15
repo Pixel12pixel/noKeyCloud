@@ -1,5 +1,5 @@
-import {useState, useEffect} from "react";
-import {AlertTriangle, Copy, Download, Check, Loader2} from "lucide-react";
+import {useState} from "react";
+import {AlertTriangle, Copy, Download, Check} from "lucide-react";
 import {Button} from "@/shared/ui/button";
 import {toast} from "sonner";
 import {
@@ -13,63 +13,24 @@ import {
 
 interface BackupCodesDialogProps {
     open: boolean;
+    codes: string[];
+    username: string;
     onAcknowledge: () => void;
 }
 
 export function BackupCodesDialog({
                                       open,
+                                      codes,
+                                      username,
                                       onAcknowledge,
                                   }: BackupCodesDialogProps) {
-    const [codes, setCodes] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
     const [hasCopied, setHasCopied] = useState(false);
     const [hasDownloaded, setHasDownloaded] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (open && codes.length === 0) {
-            fetchBackupCodes();
-        }
-    }, [open]);
-
-    const fetchBackupCodes = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const mockCodes = [
-                "8f92-a1b3", "c4d5-e6f7", "g8h9-i0j1", "k2l3-m4n5", "o6p7-q8r9",
-                "s0t1-u2v3", "w4x5-y6z7", "a8b9-c0d1", "e2f3-g4h5", "i6j7-k8l9"
-            ];
-
-            setCodes(mockCodes);
-
-
-            // TODO: Implement real API call to fetch backup codes
-            /*
-            const response = await fetch("");
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch backup codes");
-            }
-
-            const data = await response.json();
-            setCodes(data.codes);
-            */
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "An unknown error occurred");
-            toast.error("Failed to load backup codes.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleCopy = () => {
         navigator.clipboard.writeText(codes.join("\n"));
         setHasCopied(true);
-        toast.success("Backup codes copied to clipboard");
+        toast.success("Recovery code copied to clipboard");
         setTimeout(() => setHasCopied(false), 2000);
     };
 
@@ -78,31 +39,22 @@ export function BackupCodesDialog({
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "nokeycloud-backup-codes.txt";
+        a.download = `nokeycloud-${username}-recovery-code.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
         setHasDownloaded(true);
-        toast.success("Backup codes downloaded");
+        toast.success("Recovery code downloaded");
     };
 
-    const handleComplete = async () => {
+    const handleComplete = () => {
         if (!hasCopied && !hasDownloaded) {
-            toast.error("Please copy or download your codes first.");
+            toast.error("Please copy or download your code first.");
             return;
         }
-
-        setIsSubmitting(true);
-        try {
-            // TODO: Call backend to confirm the user has seen the codes
-            onAcknowledge();
-        } catch (error) {
-            toast.error("Failed to verify. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
+        onAcknowledge();
     };
 
     return (
@@ -111,36 +63,21 @@ export function BackupCodesDialog({
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2 text-2xl text-destructive">
                         <AlertTriangle className="h-6 w-6"/>
-                        Save Your Backup Codes
+                        Save Your Recovery Code
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-base text-foreground">
-                        These codes are the <strong>only way</strong> to regain access to your encrypted files. We will
-                        only show them to you once.
+                        This code is the <strong>only way</strong> to regain access to your encrypted files if you forget your password. We will only show it to you once.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <div className="my-4 rounded-md border bg-muted/50 p-4 min-h-40 flex flex-col justify-center">
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
-                            <Loader2 className="h-6 w-6 animate-spin"/>
-                            <span className="text-sm">Generating secure codes...</span>
-                        </div>
-                    ) : error ? (
-                        <div className="flex flex-col items-center justify-center gap-3 text-destructive">
-                            <span className="text-sm">{error}</span>
-                            <Button variant="outline" size="sm" onClick={fetchBackupCodes}>
-                                Try Again
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4 text-center font-mono text-sm tracking-wider">
-                            {codes.map((code, index) => (
-                                <div key={index} className="rounded bg-background py-2 border shadow-sm select-all">
-                                    {code}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                <div className="my-4 rounded-md border bg-muted/50 p-4 min-h-32 flex flex-col justify-center">
+                    <div className="grid grid-cols-1 gap-4 text-center font-mono text-lg tracking-wider">
+                        {codes.map((code, index) => (
+                            <div key={index} className="rounded bg-background py-4 px-2 border shadow-sm select-all break-all">
+                                {code}
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -148,7 +85,7 @@ export function BackupCodesDialog({
                         variant="outline"
                         className="flex-1"
                         onClick={handleCopy}
-                        disabled={isLoading || !!error || codes.length === 0}
+                        disabled={codes.length === 0}
                     >
                         {hasCopied ? <Check className="mr-2 h-4 w-4 text-green-500"/> :
                             <Copy className="mr-2 h-4 w-4"/>}
@@ -158,7 +95,7 @@ export function BackupCodesDialog({
                         variant="outline"
                         className="flex-1"
                         onClick={handleDownload}
-                        disabled={isLoading || !!error || codes.length === 0}
+                        disabled={codes.length === 0}
                     >
                         {hasDownloaded ? <Check className="mr-2 h-4 w-4 text-green-500"/> :
                             <Download className="mr-2 h-4 w-4"/>}
@@ -169,10 +106,10 @@ export function BackupCodesDialog({
                 <AlertDialogFooter>
                     <Button
                         onClick={handleComplete}
-                        disabled={isLoading || isSubmitting || (!hasCopied && !hasDownloaded)}
+                        disabled={(!hasCopied && !hasDownloaded) || codes.length === 0}
                         className="w-full"
                     >
-                        I have securely saved these codes
+                        I have securely saved this code
                     </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>

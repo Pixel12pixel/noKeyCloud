@@ -1,3 +1,4 @@
+using noKeyCloud.api.CustomMiddleware;
 using noKeyCloud.Application;
 using noKeyCloud.Infrastructure;
 using Scalar.AspNetCore;
@@ -11,8 +12,6 @@ public class Program
     /// </summary>
     public static void Main()
     {
-
-        // Load environment variables from .env file
         DotNetEnv.Env.Load();
 
         var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
@@ -22,12 +21,18 @@ public class Program
             throw new InvalidOperationException("CRITICAL ERROR: 'FRONTEND_URL' environment variable is missing. It is required for CORS and security.");
         }
 
+        var uploadStoragePath = Environment.GetEnvironmentVariable("BASE_UPLOAD_STORAGE_PATH");
+
+        if (string.IsNullOrWhiteSpace(uploadStoragePath))
+        {
+            throw new InvalidOperationException("CRITICAL ERROR: 'BASE_UPLOAD_STORAGE_PATH' environment variable is missing. It is required for file uploads.");
+        }
+
         if (!Uri.TryCreate(frontendUrl, UriKind.Absolute, out var parsedUri) || (parsedUri.Scheme != "http" && parsedUri.Scheme != "https"))
         {
             throw new InvalidOperationException($"CRITICAL ERROR: 'FRONTEND_URL' ({frontendUrl}) is malformed. It must be a valid absolute HTTP or HTTPS URL (e.g., http://localhost:5173)");
         }
 
-        // Create the WebApplication builder
         var builder = WebApplication.CreateBuilder();
 
         builder.Services.AddCors(options =>
@@ -39,6 +44,19 @@ public class Program
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+        });
+
+
+        builder.Services.AddHsts(options =>
+        {
+            options.Preload = true;
+            options.MaxAge = TimeSpan.FromDays(365);
+        });
+
+        builder.Services.AddHttpsRedirection(options =>
+        {
+            options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+            options.HttpsPort = 443;
         });
 
         builder.Services.AddAntiforgery(options =>
@@ -62,7 +80,6 @@ public class Program
 
 
 
-        // Build the application
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
@@ -76,8 +93,23 @@ public class Program
             app.MapOpenApi();
             app.MapScalarApiReference();
         }
+        else
+        {
+            app.UseHsts();
+        }
 
-        app.UseHttpsRedirection();
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Append("X-Xss-Protection", "1; mode=block");
+            context.Response.Headers.Append("X-Frame-Options", "DENY");
+            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+            await next(context);
+        });
+
+        app.UseContentSecurityPolicy();
+        //app.UseHttpsRedirection();
 
         app.UseCors("FrontendOrigin");
 
@@ -87,7 +119,6 @@ public class Program
         app.MapControllers();
 
 
-        // Run the application
         app.Run();
     }
 }

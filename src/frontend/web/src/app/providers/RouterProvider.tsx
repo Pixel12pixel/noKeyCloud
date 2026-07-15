@@ -1,10 +1,10 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { LoginPage, loginAction } from "../../pages/login/ui/LoginPage";
+import { LoginPage, loginAction } from "@/pages/login";
 import { BaseLayout } from "../layouts/BaseLayout";
-import { DashboardPage} from "@/pages/dashboard/ui/DashboardPage.tsx";
-import {ErrorPage} from "@/pages/error/ui/ErrorPage.tsx";
-import {RegisterPage, registerAction} from "@/pages/register/ui/RegisterPage";
-import {AdminPanelPage} from "@/pages/admin-panel/ui/AdminPanelPage";
+import { DashboardPage} from "@/pages/dashboard";
+import {ErrorPage} from "@/pages/error";
+import {RegisterPage, registerAction} from "@/pages/register";
+import {AdminPanelPage} from "@/pages/admin-panel";
 
 const router = createBrowserRouter([
     {
