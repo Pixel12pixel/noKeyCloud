@@ -20,6 +20,7 @@ public class FolderController : ControllerBase
     {
         _mediator = mediator;
     }
+    [ValidateAntiForgeryToken]
     [Authorize]
     [HttpGet("GetContent")]
     public async Task<IActionResult> GetContent([FromQuery] ListContentRequest listContentRequest, CancellationToken cancellationToken)
@@ -38,6 +39,7 @@ public class FolderController : ControllerBase
         }
         return BadRequest(result.Error);
     }
+    [ValidateAntiForgeryToken]
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<CreateFolderResponse>> Create([FromBody] CreateFolderRequest request, CancellationToken cancellationToken)

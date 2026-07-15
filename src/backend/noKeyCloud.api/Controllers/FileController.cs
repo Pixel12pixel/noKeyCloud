@@ -19,7 +19,7 @@ public class FileController : ControllerBase
     {
         _mediator = mediator;
     }
-
+    [ValidateAntiForgeryToken]
     [Authorize]
     [HttpPost("createFile")]
     public async Task<IActionResult> CreateFile([FromBody] CreateFileRequest request)
@@ -47,7 +47,7 @@ public class FileController : ControllerBase
         }
         return BadRequest(result.Error);
     }
-
+    [ValidateAntiForgeryToken]
     [Authorize]
     [HttpPost("upload")]
     public async Task<IActionResult> UploadFile([FromBody] UploadFileRequest request)
@@ -76,6 +76,7 @@ public class FileController : ControllerBase
         }
         return BadRequest(result.Error);
     }
+    [ValidateAntiForgeryToken]
     [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetFile([FromRoute] Guid id)

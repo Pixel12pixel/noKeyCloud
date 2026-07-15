@@ -1,4 +1,5 @@
 import { backendBaseUrl } from '@/shared/config';
+import { fetchCsrfToken } from '@/shared/api/csrf.ts';
 import {
     N, g, modPow, bytesToBigInt, bigIntToBytes, computeX,
     sha256, pad, bytesToBase64, base64ToBytes
@@ -84,6 +85,6 @@ export const loginWithSRP = async (username: string, password: string) => {
     if (bytesToBase64(expectedM2) !== authData.m2) {
         throw new Error('Server backwards trust verification failed: possible Man In The Middle');
     }
-
+    await fetchCsrfToken();
     return authData;
 };

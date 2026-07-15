@@ -16,7 +16,7 @@ public class Program
         DotNetEnv.Env.Load();
 
         var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
-        
+
         if (string.IsNullOrWhiteSpace(frontendUrl))
         {
             throw new InvalidOperationException("CRITICAL ERROR: 'FRONTEND_URL' environment variable is missing. It is required for CORS and security.");
@@ -29,16 +29,23 @@ public class Program
 
         // Create the WebApplication builder
         var builder = WebApplication.CreateBuilder();
-        
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("FrontendOrigin", policy =>
             {
-                policy.WithOrigins(frontendUrl.TrimEnd('/')) 
+                policy.WithOrigins(frontendUrl.TrimEnd('/'))
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+        });
+
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.FormFieldName = "AntiForgeryFieldname";
+            options.HeaderName = "X-CSRF-TOKEN";
+            options.SuppressXFrameOptionsHeader = false;
         });
 
         builder.Services.AddControllers();
@@ -57,7 +64,7 @@ public class Program
 
         // Build the application
         var app = builder.Build();
-        
+
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
@@ -71,7 +78,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-        
+
         app.UseCors("FrontendOrigin");
 
         app.UseAuthentication();

@@ -1,9 +1,9 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using noKeyCloud.Application.Features.Users.GetMe;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace noKeyCloud.api.Controllers;
 
@@ -11,6 +11,7 @@ namespace noKeyCloud.api.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IMediator mediator) : ControllerBase
 {
+    [ValidateAntiForgeryToken]
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetMe()
