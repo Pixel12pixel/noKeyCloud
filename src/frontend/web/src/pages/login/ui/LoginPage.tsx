@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router-dom";
+import { type ActionFunctionArgs, redirect, useActionData, useNavigation, useNavigate } from "react-router";
 import {importKey, loginWithSRP, deriveKey, decryptBytes} from "@/shared/security";
 import { LoginForm } from "@/widgets/login-form";
 import { useEffect } from "react";

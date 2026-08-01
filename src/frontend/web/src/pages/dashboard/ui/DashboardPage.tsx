@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "@/entities/session";
 import { FileExplorer } from "@/widgets/file-explorer";
 import { Button } from "@/shared/ui/button";

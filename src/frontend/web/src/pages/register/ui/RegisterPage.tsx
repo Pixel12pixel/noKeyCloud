@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {RegisterForm} from "@/widgets/register-form";
-import {type ActionFunctionArgs, useActionData, useNavigate, useNavigation} from "react-router-dom";
+import {type ActionFunctionArgs, useActionData, useNavigate, useNavigation} from "react-router";
 import {prepareRegistration} from "@/shared/security";
 import {backendBaseUrl} from "@/shared/config";
 import {BackupCodesDialog} from "@/features/backup-codes";

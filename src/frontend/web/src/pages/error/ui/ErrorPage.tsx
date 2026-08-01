@@ -1,4 +1,4 @@
-import {useRouteError, isRouteErrorResponse, useNavigate} from "react-router-dom";
+import {useRouteError, isRouteErrorResponse, useNavigate} from "react-router";
 import {AlertCircle, FileQuestion} from "lucide-react";
 import {Button} from "@/shared/ui/button";
 import {DvdBouncer} from "@/shared/ui/dvd-bouncer";

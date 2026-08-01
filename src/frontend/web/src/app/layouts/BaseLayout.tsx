@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import { Header } from "@/widgets/header";
 import { Toaster } from "@/shared/ui/sonner";
 import { Footer } from "@/widgets/footer";
