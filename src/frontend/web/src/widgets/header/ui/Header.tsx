@@ -1,5 +1,5 @@
 import { ThemeToggle } from "@/features/theme-switcher";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/entities/session";
 import type {ReactNode} from "react";

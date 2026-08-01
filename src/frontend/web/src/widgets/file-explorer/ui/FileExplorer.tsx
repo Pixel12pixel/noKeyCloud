@@ -12,7 +12,7 @@ import {
     Folder,
     Download
 } from "lucide-react";
-import {useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router";
 import {useEffect, useState} from "react";
 import {backendBaseUrl} from "@/shared/config";
 import {Button} from "@/shared/ui/button.tsx";

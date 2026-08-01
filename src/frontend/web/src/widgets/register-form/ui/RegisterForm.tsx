@@ -13,7 +13,7 @@ import {
     FieldLabel,
 } from "@/shared/ui/field.tsx"
 import {Input} from "@/shared/ui/input.tsx"
-import {Form} from "react-router-dom";
+import {Form} from "react-router";
 
 interface RegisterFormProps extends React.ComponentProps<typeof Card> {
     error?: string;
